@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "DHAN",
+    "slug": "dhan",
+    "scheme": "dhan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.hybent.dhan",
+      "supportsTablet": false,
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-dark.png"
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "DHAN uses Face ID to unlock the app."
+      }
+    },
+    "android": {
+      "package": "com.hybent.dhan",
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-foreground.png",
+        "monochromeImage": "./assets/images/adaptive-monochrome.png",
+        "backgroundColor": "#0B5D46"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Geist-Regular.ttf",
+            "./assets/fonts/Geist-Medium.ttf",
+            "./assets/fonts/Geist-SemiBold.ttf",
+            "./assets/fonts/Geist-Bold.ttf",
+            "./assets/fonts/InstrumentSerif-Regular.ttf",
+            "./assets/fonts/InstrumentSerif-Italic.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 104,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B5D46",
+          "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#0B0D0C"
+          }
+        }
+      ],
+      "expo-system-ui",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

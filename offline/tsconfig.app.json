@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmit": true,
+    "skipLibCheck": false,
+    "types": [],
+    "paths": { "@/*": ["../*"] }
+  },
+  "include": [
+    "./shims/*.d.ts",
+    "../app/**/*.tsx",
+    "../app/**/*.ts",
+    "../components/**/*",
+    "../features/**/*",
+    "../theme/**/*",
+    "../data/**/*",
+    "../store/**/*",
+    "../hooks/**/*",
+    "../utils/**/*",
+    "../mock/**/*",
+    "../types/**/*"
+  ]
+}

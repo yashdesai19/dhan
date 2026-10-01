@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": [
+        "../*"
+      ]
+    },
+    "rootDir": "..",
+    "outDir": "../.offline-build",
+    "types": [],
+    "typeRoots": [
+      "./shims-test"
+    ]
+  },
+  "include": [
+    "../__tests__/invariants.test.ts",
+    "../__tests__/*.logic.test.ts",
+    "./shims-test/*.d.ts"
+  ]
+}
