@@ -16,7 +16,6 @@ function Body() {
       onConfirm={() =>
         close(() => {
           // Navigate first, then clear the session, so the (app) guard doesn't race this.
-          if (router.canDismiss()) router.dismissAll();
           router.replace('/login');
           setTimeout(() => {
             signOut();

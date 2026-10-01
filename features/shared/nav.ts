@@ -6,7 +6,6 @@ export function useReturnTo() {
   const router = useRouter();
   return useCallback(
     (href: Href) => {
-      if (router.canDismiss()) router.dismissAll();
       router.navigate(href);
     },
     [router],

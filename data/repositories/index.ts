@@ -363,7 +363,20 @@ export const authRepo = {
         throw new MockError(String(left), 'invalid');
       }
       failedAttempts = 0;
-      return { email };
+      const cleanEmail = email.trim();
+      const namePart = cleanEmail.split('@')[0] ?? 'User';
+      const name = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+      const initials = namePart.slice(0, 2).toUpperCase();
+      db.update((s) => ({
+        ...s,
+        user: {
+          ...s.user,
+          email: cleanEmail,
+          name: s.user.email === cleanEmail ? s.user.name : name,
+          initials: s.user.email === cleanEmail ? s.user.initials : initials,
+        },
+      }));
+      return { email: cleanEmail };
     }),
   signUp: (name: string, email: string, password: string) =>
     simulate(() => {

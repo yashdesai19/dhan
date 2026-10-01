@@ -181,8 +181,10 @@ export function useMarkAllRead() {
 }
 
 export function useSignIn() {
+  const inv = useInvalidate();
   return useMutation({
     mutationFn: (v: { email: string; password: string }) => authRepo.signIn(v.email, v.password),
+    onSuccess: () => inv('user'),
   });
 }
 export function useSignUp() {
