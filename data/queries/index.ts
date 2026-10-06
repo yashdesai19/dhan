@@ -1,11 +1,15 @@
 // TanStack Query hooks (spec §13, step 3). Screens only talk to these.
-import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AppState } from 'react-native';
+import { QueryClient, focusManager, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   accountsRepo,
+  aiRepo,
   authRepo,
   budgetRepo,
   goalsRepo,
+  netWorthRepo,
+  recurringRepo,
   notificationsRepo,
   profileRepo,
   readRepo,
@@ -17,13 +21,30 @@ import { qk, type QueryKeyName } from './keys';
 
 export { qk } from './keys';
 
+/** Retry what might succeed next time (no network, server hiccup); never a rejected input. */
+function shouldRetry(failures: number, error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code;
+  const retryable = code === undefined || code === 'offline' || code === 'failed';
+  return retryable && failures < 2;
+}
+
 export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 60_000, retry: 1 },
+      queries: {
+        staleTime: 60_000,
+        retry: shouldRetry,
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+      },
       mutations: { retry: 0 },
     },
   });
+}
+
+/** Refetch stale data when the app returns to the foreground (React Native has no window focus). */
+export function bindAppFocus(): () => void {
+  const sub = AppState.addEventListener('change', (state) => focusManager.setFocused(state === 'active'));
+  return () => sub.remove();
 }
 
 // ---------------------------------------------------------------- reads
@@ -171,6 +192,31 @@ export function useRemoveGoalContribution() {
   });
 }
 
+export function useCreateGroup() {
+  const inv = useInvalidate();
+  return useMutation({ mutationFn: splitsRepo.createGroup, onSuccess: () => inv('groups', 'people') });
+}
+export function useCreateRecurring() {
+  const inv = useInvalidate();
+  return useMutation({ mutationFn: recurringRepo.create, onSuccess: () => inv('recurring') });
+}
+export function useAddHolding() {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: netWorthRepo.add,
+    onSuccess: () => inv('assets', 'liabilities', 'history'),
+  });
+}
+export function useCreateGoal() {
+  const inv = useInvalidate();
+  return useMutation({ mutationFn: goalsRepo.create, onSuccess: () => inv('goals') });
+}
+export function useConfirmReset() {
+  return useMutation({
+    mutationFn: (v: { code: string; password: string }) => authRepo.confirmReset(v.code, v.password),
+  });
+}
+
 export function useUpdateProfile() {
   const inv = useInvalidate();
   return useMutation({ mutationFn: profileRepo.update, onSuccess: () => inv('user') });
@@ -180,20 +226,29 @@ export function useMarkAllRead() {
   return useMutation({ mutationFn: notificationsRepo.markAllRead, onSuccess: () => inv('notifications') });
 }
 
+// A new session must never show data cached for the previous one: drop the whole cache.
 export function useSignIn() {
-  const inv = useInvalidate();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (v: { email: string; password: string }) => authRepo.signIn(v.email, v.password),
-    onSuccess: () => inv('user'),
+    onSuccess: () => qc.clear(),
   });
 }
 export function useSignUp() {
-  const inv = useInvalidate();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (v: { name: string; email: string; password: string }) =>
       authRepo.signUp(v.name, v.email, v.password),
-    onSuccess: () => inv('user'),
+    onSuccess: () => qc.clear(),
   });
+}
+/** Ends the session on the server and forgets this user's data on the device. */
+export function useSignOut() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: authRepo.signOut, onSettled: () => qc.clear() });
+}
+export function useAskAI() {
+  return useMutation({ mutationFn: (question: string) => aiRepo.ask(question) });
 }
 export function useRequestReset() {
   return useMutation({ mutationFn: (email: string) => authRepo.requestReset(email) });

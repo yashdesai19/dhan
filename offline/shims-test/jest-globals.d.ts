@@ -18,3 +18,4 @@ interface OfflineMatchers {
   toBeFalsy(): void;
 }
 declare function expect(actual: unknown): OfflineMatchers;
+declare const process: { env: Record<string, string | undefined> };

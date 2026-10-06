@@ -24,12 +24,13 @@ import { useHighlightStore, useToastStore } from '@/store/ui';
 import { layout, space, useColors } from '@/theme';
 import { addDays } from '@/utils/dates';
 import { formatAmountInput, inr } from '@/utils/format';
-import { dateLabel, EntryHeader, EntryPill, nextAccount } from './EntryParts';
+import { dateLabel, EntryHeader, EntryPill, nextAccount, useValidDraftIds } from './EntryParts';
 
 function useEntry(kind: 'expense' | 'income') {
   const { today } = useToday();
-  const { accounts, categories } = useMoneyData();
+  const { accounts, categories, loading } = useMoneyData();
   const chipOrder = useChipOrder().data;
+  useValidDraftIds(accounts, categories, chipOrder);
   const draft = useEntryDraftStore((s) => s.draft);
   const patch = useEntryDraftStore((s) => s.patch);
   const reset = useEntryDraftStore((s) => s.reset);
@@ -49,17 +50,23 @@ function useEntry(kind: 'expense' | 'income') {
     .map((c) => ({ value: c.id, label: c.short }));
   const catId = kind === 'expense' ? draft.categoryId : draft.incomeSourceId;
   const cat = categories.find((c) => c.id === catId);
-  const account = accounts.find((a) => a.id === draft.accountId);
+  const live = accounts.filter((a) => !a.archived);
+  const account = live.find((a) => a.id === draft.accountId) ?? live[0];
   const value = amountValue(draft.amount);
   const pending = addExpense.isPending || addIncome.isPending;
 
   const save = () => {
     setError(null);
+    // Still loading: keep the draft's account rather than dropping the tap
+    if (!account && !loading) {
+      setError('Please add an account in Accounts first.');
+      return;
+    }
     const snapshot = draft;
     const input = {
       amount: value,
       categoryId: catId,
-      accountId: draft.accountId,
+      accountId: account?.id ?? draft.accountId,
       date: draft.date,
       note: draft.note || undefined,
     };
@@ -86,7 +93,21 @@ function useEntry(kind: 'expense' | 'income') {
     else addIncome.mutate(input, { onSuccess, onError });
   };
 
-  return { today, accounts, draft, patch, options, catId, cat, account, value, save, pending, error };
+  return {
+    today,
+    accounts,
+    categories,
+    draft,
+    patch,
+    options,
+    catId,
+    cat,
+    account,
+    value,
+    save,
+    pending,
+    error,
+  };
 }
 
 function Frame({ children }: { children: ReactNode }) {
@@ -131,7 +152,12 @@ export function AddExpenseScreen() {
             chevron
             accessibilityHint="Switches to your next account"
             onPress={() => {
-              const n = nextAccount(e.accounts, e.draft.accountId);
+              const live = e.accounts.filter((a) => !a.archived);
+              if (live.length === 0) {
+                router.push('/accounts/edit');
+                return;
+              }
+              const n = nextAccount(e.accounts, e.account?.id ?? e.draft.accountId);
               if (n) e.patch({ accountId: n.id });
             }}
           />
@@ -241,7 +267,8 @@ export function AddIncomeScreen() {
           value={custom}
           onChangeText={(v) => {
             setCustom(v);
-            e.patch({ incomeSourceId: 'other-in', note: v });
+            const other = e.categories.find((c) => c.kind === 'income' && /^other/i.test(c.name));
+            e.patch({ incomeSourceId: other?.id ?? 'other-in', note: v });
           }}
           placeholder="For example, Rent from tenant"
           autoFocus

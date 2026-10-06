@@ -28,6 +28,17 @@ Module._resolveFilename = function (request, ...rest) {
   if (request.startsWith('@/')) request = path.join(out, request.slice(2));
   return origResolve.call(this, request, ...rest);
 };
+const origLoad = Module._load;
+Module._load = function (request, parent, isMain) {
+  if (request === 'expo-secure-store') {
+    return {
+      getItemAsync: async () => null,
+      setItemAsync: async () => {},
+      deleteItemAsync: async () => {},
+    };
+  }
+  return origLoad.call(this, request, parent, isMain);
+};
 
 // Minimal jest-compatible globals.
 const tests = [];

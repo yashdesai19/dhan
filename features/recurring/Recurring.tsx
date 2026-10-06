@@ -24,7 +24,7 @@ import { useAccounts, useRecurring } from '@/data/queries';
 import { useToday } from '@/features/shared/hooks';
 import { space } from '@/theme';
 import type { Recurring } from '@/types/domain';
-import { monthName, relativeDay, shiftMonth } from '@/utils/dates';
+import { daysInMonth, monthName, relativeDay, shiftMonth } from '@/utils/dates';
 import { inr, percent, plural } from '@/utils/format';
 import { incomingInMonth, outgoingInMonth, subscriptions, upcomingSplit } from '@/utils/recurring';
 
@@ -33,7 +33,9 @@ type Filter = 'all' | 'bills' | 'emis' | 'income';
 export function RecurringScreen() {
   const router = useRouter();
   const { today, month } = useToday();
-  const next = shiftMonth(month, 1);
+  // This month, or next month once fewer than 7 days of this one are left
+  const daysLeft = daysInMonth(month) - Number(today.slice(8, 10));
+  const next = daysLeft < 7 ? shiftMonth(month, 1) : month;
   const recurring = useRecurring();
   const accounts = useAccounts().data ?? [];
   const [filter, setFilter] = useState<Filter>('all');
@@ -95,7 +97,13 @@ export function RecurringScreen() {
     <Screen gap={space[20]}>
       <TopBar
         title="Recurring"
-        trailing={<IconButton icon="plus" accessibilityLabel="Add recurring payment" />}
+        trailing={
+          <IconButton
+            icon="plus"
+            accessibilityLabel="Add recurring payment"
+            onPress={() => router.push('/recurring/new')}
+          />
+        }
       />
       <View style={styles.gap6}>
         <Text variant="small" color="muted">{`Going out in ${monthName(next, true)}`}</Text>
@@ -159,17 +167,23 @@ export function RecurringScreen() {
       {filter === 'all' || filter === 'income' ? (
         <View style={styles.gap10}>
           <SectionLabel>Recurring income</SectionLabel>
-          <ListCard>
-            {view.inc.items.map((r) => (
-              <ListRow
-                key={r.id}
-                leading={<DateBadge date={r.nextDate} />}
-                title={r.name}
-                subtitle={`Into ${acctName(r.accountId)}`}
-                trailing={<RowAmount value={inr(r.amount, 'plus')} color="income" />}
-              />
-            ))}
-          </ListCard>
+          {view.inc.items.length === 0 ? (
+            <Text variant="small" color="muted">
+              No regular income set up. Tap + to add your salary.
+            </Text>
+          ) : (
+            <ListCard>
+              {view.inc.items.map((r) => (
+                <ListRow
+                  key={r.id}
+                  leading={<DateBadge date={r.nextDate} />}
+                  title={r.name}
+                  subtitle={`Into ${acctName(r.accountId)}`}
+                  trailing={<RowAmount value={inr(r.amount, 'plus')} color="income" />}
+                />
+              ))}
+            </ListCard>
+          )}
         </View>
       ) : null}
     </Screen>

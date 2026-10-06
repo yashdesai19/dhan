@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
-import { StyleSheet, View, BackHandler } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, Logo, Text, TextButton, Touchable } from '@/components';
@@ -8,7 +9,24 @@ import { haptics } from '@/hooks/feedback';
 import { useSessionStore } from '@/store/session';
 import { iconSize, moneySizes, space, useColors } from '@/theme';
 
-/** App lock (spec §16). Biometrics are UI only: tapping the Face ID button unlocks. */
+const BIOMETRIC = Platform.OS === 'ios' ? 'Face ID' : 'fingerprint';
+
+/**
+ * Asks the phone to confirm it's the owner: fingerprint or Face ID, with the phone's own PIN,
+ * pattern or password as the fallback. A phone with no screen lock has nothing to check against.
+ */
+async function confirmOwner(): Promise<boolean> {
+  const level = await LocalAuthentication.getEnrolledLevelAsync();
+  if (level === LocalAuthentication.SecurityLevel.NONE) return true;
+  const result = await LocalAuthentication.authenticateAsync({
+    promptMessage: 'Unlock DHAN',
+    cancelLabel: 'Cancel',
+    disableDeviceFallback: false,
+  });
+  return result.success;
+}
+
+/** App lock (spec §16): opens only after the phone confirms its owner. */
 export function LockScreen() {
   const c = useColors();
   const router = useRouter();
@@ -21,12 +39,29 @@ export function LockScreen() {
     return () => sub.remove();
   }, []);
 
-  const onUnlock = () => {
-    haptics.success();
-    unlock();
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)');
-  };
+  const [failed, setFailed] = useState(false);
+  const busy = useRef(false);
+  const onUnlock = useCallback(async () => {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      if (!(await confirmOwner())) {
+        setFailed(true);
+        return;
+      }
+      haptics.success();
+      unlock();
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)');
+    } finally {
+      busy.current = false;
+    }
+  }, [router, unlock]);
+
+  // Ask straight away, as banking apps do
+  useEffect(() => {
+    void onUnlock();
+  }, [onUnlock]);
 
   return (
     <View
@@ -59,16 +94,20 @@ export function LockScreen() {
       <View style={styles.spacer} />
       <View style={styles.bottom}>
         <Touchable
-          onPress={onUnlock}
+          onPress={() => void onUnlock()}
           style={[styles.face, { backgroundColor: c.primarySoft }]}
-          accessibilityLabel="Unlock with Face ID"
+          accessibilityLabel={`Unlock with ${BIOMETRIC}`}
         >
           <Icon name="faceid" size={iconSize.hero} color="primary" />
         </Touchable>
-        <Text variant="small" color="muted" style={styles.hint}>
-          Tap to unlock with Face ID
+        <Text variant="small" color={failed ? 'expense' : 'muted'} style={styles.hint}>
+          {failed ? 'Not unlocked. Tap to try again.' : `Tap to unlock with ${BIOMETRIC}`}
         </Text>
-        <TextButton label="Use PIN instead" accessibilityHint="PIN entry is not available in this preview" />
+        <TextButton
+          label="Use phone PIN instead"
+          onPress={() => void onUnlock()}
+          accessibilityHint="Unlock with your phone's PIN, pattern or password"
+        />
       </View>
     </View>
   );

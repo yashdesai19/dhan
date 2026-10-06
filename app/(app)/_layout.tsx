@@ -76,6 +76,10 @@ export default function AppLayout() {
         <Stack.Screen name="add/split" options={modal} />
         <Stack.Screen name="transactions/[id]/edit" options={modal} />
         <Stack.Screen name="accounts/edit" options={modal} />
+        <Stack.Screen name="splits/new" options={modal} />
+        <Stack.Screen name="goals/new" options={modal} />
+        <Stack.Screen name="recurring/new" options={modal} />
+        <Stack.Screen name="reports/new-holding" options={modal} />
         <Stack.Screen name="splits/settled" options={{ ...modal, animation: 'fade' }} />
         <Stack.Screen name="add-sheet" options={sheet} />
         <Stack.Screen name="transactions/filters" options={sheet} />

@@ -148,6 +148,8 @@ export function GroupDetailScreen() {
                   leading={<Avatar initials={p.initials} tone={p.avatarTone} />}
                   title={p.name}
                   subtitle={v >= 0 ? 'owes you' : 'you owe'}
+                  onPress={() => router.push(`/splits/settle/${id}`)}
+                  accessibilityHint={v >= 0 ? 'Record a payment from them' : 'Settle up'}
                   trailing={
                     <View style={styles.balance}>
                       <RowAmount value={inr(Math.abs(v))} color={v >= 0 ? 'income' : 'expense'} />

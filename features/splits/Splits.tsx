@@ -119,12 +119,7 @@ export function SplitsScreen() {
     >
       <TopBar
         title="Splits"
-        trailing={
-          <SmallButton
-            label="New group"
-            accessibilityHint="Creating groups is not available in this preview"
-          />
-        }
+        trailing={<SmallButton label="New group" onPress={() => router.push('/splits/new')} />}
       />
       <View style={styles.gap4}>
         <Text variant="small" color="muted">
@@ -180,6 +175,8 @@ export function SplitsScreen() {
                     subtitle={`owes you ${inr(v)}`}
                     subtitleColor="income"
                     pad={10}
+                    onPress={() => router.push(`/splits/settle/${id}`)}
+                    accessibilityHint="Record a payment from them"
                     trailing={
                       <SmallButton
                         label="Remind"

@@ -1,12 +1,14 @@
 import { router } from 'expo-router';
 
 import { ConfirmSheet, Sheet, useSheet } from '@/components';
+import { useSignOut } from '@/data/queries';
 import { useSessionStore } from '@/store/session';
 import { useAssistantStore } from '@/store/ui';
 
 function Body() {
   const { close } = useSheet();
   const signOut = useSessionStore((s) => s.signOut);
+  const endSession = useSignOut();
   return (
     <ConfirmSheet
       icon="logout"
@@ -15,6 +17,8 @@ function Body() {
       confirmLabel="Sign out"
       onConfirm={() =>
         close(() => {
+          // Revoke the session on the server and wipe this user's data from the device
+          endSession.mutate();
           // Navigate first, then clear the session, so the (app) guard doesn't race this.
           router.replace('/login');
           setTimeout(() => {

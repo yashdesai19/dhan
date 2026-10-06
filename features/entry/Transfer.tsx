@@ -27,7 +27,7 @@ import { fonts, iconSize, moneySizes, radius, size, space, useColors } from '@/t
 import type { Account } from '@/types/domain';
 import { addDays } from '@/utils/dates';
 import { groupIN, inr } from '@/utils/format';
-import { dateLabel, EntryHeader, EntryPill, nextAccount } from './EntryParts';
+import { dateLabel, EntryHeader, EntryPill, nextAccount, useValidDraftIds } from './EntryParts';
 
 const ICON: Record<Account['type'], 'bank' | 'cash' | 'coin' | 'card' | 'wallet' | 'tag'> = {
   bank: 'bank',
@@ -75,7 +75,8 @@ function AccountCard({
 export function TransferScreen() {
   const c = useColors();
   const { today } = useToday();
-  const { accounts } = useMoneyData();
+  const { accounts, categories, loading } = useMoneyData();
+  useValidDraftIds(accounts, categories);
   const draft = useEntryDraftStore((s) => s.draft);
   const patch = useEntryDraftStore((s) => s.patch);
   const reset = useEntryDraftStore((s) => s.reset);
@@ -88,16 +89,24 @@ export function TransferScreen() {
   const [noteOpen, setNoteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const from = accounts.find((a) => a.id === draft.fromId);
-  const to = accounts.find((a) => a.id === draft.toId);
+  const live = accounts.filter((a) => !a.archived);
+  const from = live.find((a) => a.id === draft.fromId) ?? live[0];
+  const to = live.find((a) => a.id === draft.toId) ?? live.find((a) => a.id !== from?.id);
   const amount = Number(draft.amount.split('.')[0] || '0');
   const empty = amount === 0;
 
   const submit = () => {
     setError(null);
+    // Still loading: keep the draft's accounts rather than dropping the tap
+    const fromId = from?.id ?? draft.fromId;
+    const toId = to?.id ?? draft.toId;
+    if ((!loading && (!from || !to)) || fromId === toId) {
+      setError('Transfers require at least two different accounts.');
+      return;
+    }
     const snapshot = draft;
     add.mutate(
-      { amount, fromId: draft.fromId, toId: draft.toId, date: draft.date, note: draft.note || undefined },
+      { amount, fromId, toId, date: draft.date, note: draft.note || undefined },
       {
         onSuccess: (t) => {
           reset();

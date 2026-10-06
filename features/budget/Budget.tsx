@@ -25,8 +25,10 @@ import { iconSize, space } from '@/theme';
 import { budgetStatus, suggestBudget, type CategoryBudgetStatus } from '@/utils/budget';
 import { dayMonth, monthName, monthOf, shiftMonth } from '@/utils/dates';
 import { inr, plural } from '@/utils/format';
+import { expenseCategoryIds } from '@/utils/summary';
 
-const BUDGETABLE = ['bills', 'food', 'transport', 'shopping'];
+// By name, so it works with the demo's ids and the server's
+const BUDGETABLE = ['Bills', 'Food', 'Transport', 'Shopping'];
 
 function MonthSwitch({ month, onChange }: { month: string; onChange: (m: string) => void }) {
   return (
@@ -116,9 +118,10 @@ export function BudgetScreen() {
       ),
     [budgets.data, money.transactions, month, today],
   );
+  const budgetable = useMemo(() => expenseCategoryIds(money.categories, BUDGETABLE), [money.categories]);
   const suggestion = useMemo(
-    () => suggestBudget(history.data ?? [], money.transactions, BUDGETABLE, current),
-    [history.data, money.transactions, current],
+    () => suggestBudget(history.data ?? [], money.transactions, budgetable, current),
+    [history.data, money.transactions, budgetable, current],
   );
 
   if (money.loading || budgets.isPending) {
@@ -157,35 +160,54 @@ export function BudgetScreen() {
               Suggested for you
             </Text>
           </View>
-          <Money amount={suggestion.total} size="sm" />
-          <Text variant="small" color="muted">
-            Based on your last 3 months, with 10% breathing room. Split across Bills, Food, Transport and
-            Shopping.
-          </Text>
+          {suggestion.total > 0 ? (
+            <>
+              <Money amount={suggestion.total} size="sm" />
+              <Text variant="small" color="muted">
+                Based on your last 3 months, with 10% breathing room. Split across Bills, Food, Transport and
+                Shopping.
+              </Text>
+            </>
+          ) : (
+            <Text variant="small" color="muted">
+              Add a few expenses and DHAN will suggest a limit from your spending. Or set one yourself now.
+            </Text>
+          )}
           <View style={styles.row10}>
+            {suggestion.total > 0 && (
+              <Button
+                label={`Use ${inr(suggestion.total)}`}
+                size="sm"
+                grow
+                loading={replace.isPending}
+                onPress={() =>
+                  replace.mutate(
+                    Object.entries(suggestion.split).map(([categoryId, limit]) => ({
+                      categoryId,
+                      limit,
+                      rollover: false,
+                      warnAtPercent: 90,
+                    })),
+                    { onSuccess: () => show({ message: `Budget set · ${inr(suggestion.total)} a month` }) },
+                  )
+                }
+              />
+            )}
             <Button
-              label={`Use ${inr(suggestion.total)}`}
+              label={suggestion.total > 0 ? 'Set my own' : 'Set a budget'}
+              kind={suggestion.total > 0 ? 'secondary' : 'primary'}
               size="sm"
               grow
-              loading={replace.isPending}
               onPress={() =>
-                replace.mutate(
-                  Object.entries(suggestion.split).map(([categoryId, limit]) => ({
-                    categoryId,
-                    limit,
-                    rollover: false,
-                    warnAtPercent: 90,
-                  })),
-                  { onSuccess: () => show({ message: `Budget set · ${inr(suggestion.total)} a month` }) },
-                )
+                router.push({
+                  pathname: '/budget/[category]/edit',
+                  params: {
+                    category:
+                      money.categories.find((c) => c.kind === 'expense' && c.short === 'Food')?.id ?? 'new',
+                    month,
+                  },
+                })
               }
-            />
-            <Button
-              label="Set my own"
-              kind="secondary"
-              size="sm"
-              grow
-              onPress={() => router.push({ pathname: '/budget/food/edit', params: { month } })}
             />
           </View>
         </Card>

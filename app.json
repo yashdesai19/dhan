@@ -58,7 +58,14 @@
         }
       ],
       "expo-system-ui",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "DHAN uses Face ID to unlock the app."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false

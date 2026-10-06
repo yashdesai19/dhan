@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { isRunningInExpoGo } from 'expo';
@@ -11,7 +11,9 @@ import * as SystemUI from 'expo-system-ui';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { createQueryClient } from '@/data/queries';
+import { setSessionExpiredHandler } from '@/data/api/client';
+import { bindAppFocus, createQueryClient } from '@/data/queries';
+import { useSessionStore } from '@/store/session';
 import { fontFiles, ThemeProvider, useTheme } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
@@ -27,7 +29,7 @@ function ThemedStack() {
     void SystemUI.setBackgroundColorAsync(colors.bg);
   }, [colors.bg]);
   return (
-    <>
+    <View style={[styles.fill, { backgroundColor: colors.bg }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="index" options={{ animation: 'fade' }} />
@@ -38,13 +40,23 @@ function ThemedStack() {
           options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
         />
       </Stack>
-    </>
+    </View>
   );
 }
 
 export default function RootLayout() {
   const [queryClient] = useState(createQueryClient);
   const [fontsLoaded, fontError] = useFonts(fontFiles);
+
+  useEffect(() => bindAppFocus(), []);
+  // When the session can't be renewed: forget the user's data and return to Log in
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      queryClient.clear();
+      useSessionStore.getState().signOut();
+    });
+    return () => setSessionExpiredHandler(null);
+  }, [queryClient]);
 
   useEffect(() => {
     if (fontsLoaded || fontError) void SplashScreen.hideAsync();

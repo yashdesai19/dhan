@@ -25,6 +25,7 @@ import {
 } from '@/components';
 import { useAddGroupExpense } from '@/data/queries';
 import { undo } from '@/data/queries/actions';
+import { useMoneyData } from '@/features/shared/hooks';
 import { useReturnTo } from '@/features/shared/nav';
 import { useSplitDraftStore } from '@/store/drafts';
 import { useToastStore } from '@/store/ui';
@@ -100,6 +101,7 @@ export function AddSplitScreen() {
   const c = useColors();
   const params = useLocalSearchParams<{ amount: string; title: string; groupId: string }>();
   const s = useSplits();
+  const { accounts } = useMoneyData();
   const draft = useSplitDraftStore((x) => x.draft);
   const patch = useSplitDraftStore((x) => x.patch);
   const reset = useSplitDraftStore((x) => x.reset);
@@ -142,6 +144,9 @@ export function AddSplitScreen() {
   const ok = amount > 0 && assigned === amount;
   const nIncluded = memberIds.filter((id) => shares[id] && (shares[id] ?? 0) > 0).length;
   const name = (id: ID) => (id === ME ? 'You' : s.person(id).name);
+  // When you paid, the money left one of your accounts
+  const live = accounts.filter((a) => !a.archived);
+  const payFrom = draft.paidBy === ME ? (live.find((a) => a.id === draft.accountId) ?? live[0]) : undefined;
 
   const save = () => {
     setError(null);
@@ -155,6 +160,7 @@ export function AddSplitScreen() {
         paidBy: draft.paidBy,
         method: draft.method,
         shares,
+        accountId: payFrom?.id,
       },
       {
         onSuccess: (ge) => {
@@ -182,6 +188,11 @@ export function AddSplitScreen() {
   const cyclePayer = () => {
     const i = memberIds.indexOf(draft.paidBy);
     patch({ paidBy: memberIds[(i + 1) % memberIds.length] ?? ME });
+  };
+  const cycleAccount = () => {
+    const i = live.findIndex((a) => a.id === payFrom?.id);
+    const next = live[(i + 1) % Math.max(1, live.length)];
+    if (next) patch({ accountId: next.id });
   };
   const cycleGroup = () => {
     const i = s.groups.findIndex((g) => g.id === draft.groupId);
@@ -304,7 +315,13 @@ export function AddSplitScreen() {
       overlay={
         <StickyFooter>
           <Button
-            label={nIncluded === 0 && draft.method === 'equal' ? 'Pick at least one person' : 'Save split'}
+            label={
+              amount === 0
+                ? 'Enter an amount'
+                : nIncluded === 0 && draft.method === 'equal'
+                  ? 'Pick at least one person'
+                  : 'Save split'
+            }
             disabled={!ok}
             loading={add.isPending}
             onPress={save}
@@ -336,6 +353,7 @@ export function AddSplitScreen() {
       />
       <ListCard>
         <SelectRow label="Paid by" value={name(draft.paidBy)} icon="user" onPress={cyclePayer} />
+        {payFrom && <SelectRow label="Paid from" value={payFrom.name} icon="bank" onPress={cycleAccount} />}
         <SelectRow label="Group" value={group?.name ?? ''} icon="users" onPress={cycleGroup} />
       </ListCard>
       <View style={styles.gap10}>

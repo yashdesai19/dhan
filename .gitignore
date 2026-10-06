@@ -10,3 +10,8 @@ yarn-error.log*
 .offline-build/
 .DS_Store
 Thumbs.db
+
+# Local environment (machine-specific API address)
+.env
+.env*.local
+

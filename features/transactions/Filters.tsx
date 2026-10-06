@@ -13,6 +13,7 @@ import {
 import { space } from '@/theme';
 import type { TxType } from '@/types/domain';
 import { groupIN, plural } from '@/utils/format';
+import { expenseCategoryIds } from '@/utils/summary';
 
 const RANGES: DateRange[] = ['This month', 'Last month', '3 months', 'Custom'];
 const TYPES: { value: TxType; label: string }[] = [
@@ -34,9 +35,15 @@ function Body({ f, setF }: { f: TxFilters; setF: (u: (x: TxFilters) => TxFilters
     () => applyFilters(money.transactions, { ...f, quick: 'All' }, today).length,
     [money.transactions, f, today],
   );
-  const cats = money.categories.filter(
-    (c) => c.kind === 'expense' && ['food', 'transport', 'shopping', 'bills', 'health', 'fun'].includes(c.id),
-  );
+  const catIds = expenseCategoryIds(money.categories, [
+    'Food',
+    'Transport',
+    'Shopping',
+    'Bills',
+    'Health',
+    'Fun',
+  ]);
+  const cats = money.categories.filter((c) => catIds.includes(c.id));
   const accts = money.accounts.filter((a) => !a.archived);
   const money$ = (v: string) =>
     v.replace(/[^\d]/g, '') ? `₹${groupIN(Number(v.replace(/[^\d]/g, '')))}` : '';

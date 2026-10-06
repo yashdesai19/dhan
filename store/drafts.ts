@@ -45,6 +45,8 @@ export interface SplitDraft {
   amount: string;
   title: string;
   paidBy: ID;
+  /** Account you paid from, when you paid; empty means your first account. */
+  accountId: ID;
   groupId: ID;
   method: SplitMethod;
   included: Record<ID, boolean>;
@@ -58,6 +60,7 @@ export const initialSplit: SplitDraft = {
   amount: '',
   title: '',
   paidBy: 'me',
+  accountId: '',
   groupId: 'goa',
   method: 'equal',
   included: { me: true, aman: true, rahul: true, karan: true },

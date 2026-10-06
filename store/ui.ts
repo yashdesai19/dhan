@@ -31,23 +31,33 @@ export const useToastStore = create<ToastStore>((set, get) => ({
   },
 }));
 
+/** A fetched DHAN AI answer, or why it couldn't be fetched. */
+export type AssistantAnswer =
+  | { answer: string; stats: AIResponse['stats'] }
+  | { error: string };
+
 interface AssistantStore {
   asked: AIResponse['id'][];
   typing: boolean;
+  /** Answers fetched from the API, kept for the session so a question is asked only once. */
+  answers: Partial<Record<AIResponse['id'], AssistantAnswer>>;
   ask: (id: AIResponse['id']) => void;
   doneTyping: () => void;
+  setAnswer: (id: AIResponse['id'], answer: AssistantAnswer) => void;
   reset: () => void;
 }
 
 export const useAssistantStore = create<AssistantStore>((set, get) => ({
   asked: ['most'],
   typing: false,
+  answers: {},
   ask: (id) => {
     if (get().typing || get().asked.includes(id)) return;
     set({ asked: [...get().asked, id], typing: true });
   },
   doneTyping: () => set({ typing: false }),
-  reset: () => set({ asked: ['most'], typing: false }),
+  setAnswer: (id, answer) => set({ answers: { ...get().answers, [id]: answer } }),
+  reset: () => set({ asked: ['most'], typing: false, answers: {} }),
 }));
 
 interface HighlightStore {

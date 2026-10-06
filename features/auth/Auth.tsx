@@ -19,7 +19,12 @@ import {
   TopBar,
   Touchable,
 } from '@/components';
-import { MOCK_PASSWORD } from '@/data/repositories';
+import { isApiMode, MOCK_PASSWORD } from '@/data/repositories';
+
+// The demo build pre-fills its sample account; a real account starts blank.
+const demo = <T,>(value: T, blank: T): T => (isApiMode ? blank : value);
+// How long the server pauses sign-in after too many wrong passwords (the demo pauses for 5)
+const PAUSE_MINUTES = isApiMode ? 15 : 5;
 import { useAccounts, useRequestReset, useSignIn, useSignUp, useUpsertAccount } from '@/data/queries';
 import { useSessionStore } from '@/store/session';
 import { iconSize, layout, space, useColors } from '@/theme';
@@ -58,8 +63,8 @@ export function LoginScreen() {
   const router = useRouter();
   const signIn = useSignIn();
   const startSession = useSessionStore((s) => s.signIn);
-  const [email, setEmail] = useState('yash@example.com');
-  const [password, setPassword] = useState(MOCK_PASSWORD);
+  const [email, setEmail] = useState(demo('yash@example.com', ''));
+  const [password, setPassword] = useState(demo(MOCK_PASSWORD, ''));
   const [show, setShow] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -98,8 +103,8 @@ export function LoginScreen() {
       {attemptsLeft !== null ? (
         <Banner icon="alert" tone="error">
           {attemptsLeft > 0
-            ? `${WORDS[attemptsLeft] ?? attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left before we pause sign-in for 5 minutes.`
-            : 'Sign-in is paused for 5 minutes. Reset your password to get back in now.'}
+            ? `${WORDS[attemptsLeft] ?? attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left before we pause sign-in for ${PAUSE_MINUTES} minutes.`
+            : `Sign-in is paused for ${PAUSE_MINUTES} minutes. Reset your password to get back in now.`}
         </Banner>
       ) : null}
       <TextField
@@ -158,9 +163,9 @@ export function SignUpScreen() {
   const c = useColors();
   const router = useRouter();
   const signUp = useSignUp();
-  const [name, setName] = useState('Yash Desai');
-  const [email, setEmail] = useState('yash@example.com');
-  const [password, setPassword] = useState('dhan-2026-secure');
+  const [name, setName] = useState(demo('Yash Desai', ''));
+  const [email, setEmail] = useState(demo('yash@example.com', ''));
+  const [password, setPassword] = useState(demo('dhan-2026-secure', ''));
   const [agree, setAgree] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const score = strength(password);
@@ -307,6 +312,7 @@ export function ForgotPasswordScreen() {
 export function ForgotSentScreen() {
   const router = useRouter();
   const { email = 'yash@example.com' } = useLocalSearchParams<{ email: string }>();
+  const resend = useRequestReset();
   const [secs, setSecs] = useState(42);
   useEffect(() => {
     if (secs <= 0) return;
@@ -320,7 +326,11 @@ export function ForgotSentScreen() {
         <EmptyState
           icon="mail"
           title="Check your inbox"
-          body={`We sent a reset link to ${email}. It expires in 30 minutes.`}
+          body={
+            isApiMode
+              ? `If ${email} has a DHAN account, we sent it a reset code. It expires in 30 minutes.`
+              : `We sent a reset link to ${email}. It expires in 30 minutes.`
+          }
         />
       </View>
       <View style={styles.gap10}>
@@ -328,6 +338,9 @@ export function ForgotSentScreen() {
           label="Open email app"
           onPress={() => void Linking.openURL('mailto:').catch(() => undefined)}
         />
+        {isApiMode ? (
+          <Button label="I have a code" kind="secondary" onPress={() => router.push('/reset-password')} />
+        ) : null}
         <Button label="Back to log in" kind="secondary" onPress={() => router.replace('/login')} />
         <View style={styles.center}>
           {secs > 0 ? (
@@ -335,7 +348,14 @@ export function ForgotSentScreen() {
               {`Didn’t get it? Resend in 0:${String(secs).padStart(2, '0')}`}
             </Text>
           ) : (
-            <TextButton label="Resend link" size="sm" onPress={() => setSecs(42)} />
+            <TextButton
+              label="Resend link"
+              size="sm"
+              onPress={() => {
+                setSecs(42);
+                resend.mutate(email);
+              }}
+            />
           )}
         </View>
       </View>
@@ -349,8 +369,8 @@ export function CreateFirstAccountScreen() {
   const upsert = useUpsertAccount();
   const startSession = useSessionStore((s) => s.signIn);
   const [type, setType] = useState<AccountType>('bank');
-  const [name, setName] = useState('HDFC Bank');
-  const [balance, setBalance] = useState('₹86,450');
+  const [name, setName] = useState(demo('HDFC Bank', ''));
+  const [balance, setBalance] = useState(demo('₹86,450', '₹0'));
   const [error, setError] = useState<string | null>(null);
 
   const enter = () => {

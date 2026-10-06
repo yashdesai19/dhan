@@ -60,11 +60,11 @@ export function AccountsScreen() {
     const segments = [
       ...banks.map((a, i) => ({
         id: a.id,
-        value: Math.max(0, a.balance),
+        weight: Math.max(0, a.balance),
         color: tokens[i % tokens.length] ?? 'chart1',
       })),
-      { id: 'cash', value: cashTotal, color: 'chart2' as ColorName },
-    ].filter((s) => s.value > 0);
+      { id: 'cash', weight: cashTotal, color: 'chart2' as ColorName },
+    ].filter((s) => s.weight > 0);
     return {
       balance: netBalance(accounts),
       banks,
@@ -115,7 +115,7 @@ export function AccountsScreen() {
           {view.segments.map((s) => (
             <View
               key={s.id}
-              style={{ flex: s.value, height: 8, borderRadius: 3, backgroundColor: c[s.color] }}
+              style={{ flex: s.weight, height: 8, borderRadius: 3, backgroundColor: c[s.color] }}
             />
           ))}
         </View>

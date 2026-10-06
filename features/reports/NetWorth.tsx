@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
 
 import {
   AreaLineChart,
@@ -43,7 +44,13 @@ export function NetWorthScreen() {
     <Screen gap={space[18]}>
       <TopBar
         title="Net worth"
-        trailing={<IconButton icon="plus" accessibilityLabel="Add asset or loan" />}
+        trailing={
+          <IconButton
+            icon="plus"
+            accessibilityLabel="Add asset or loan"
+            onPress={() => router.push('/reports/new-holding')}
+          />
+        }
       />
       <View style={styles.gap8}>
         <Text variant="small" color="muted">
@@ -92,19 +99,25 @@ export function NetWorthScreen() {
       >
         Loans and cards
       </SectionLabel>
-      <ListCard>
-        {view.nw.liabilities.map((r) => (
-          <ListRow
-            key={r.id}
-            leading={<IconTile icon={r.icon} tone="expense" />}
-            title={r.name}
-            subtitle={r.note}
-            trailing={<RowAmount value={inr(r.value)} />}
-          />
-        ))}
-      </ListCard>
+      {view.nw.liabilities.length === 0 ? (
+        <Text variant="small" color="muted">
+          No loans or card dues. Tap + to add a loan.
+        </Text>
+      ) : (
+        <ListCard>
+          {view.nw.liabilities.map((r) => (
+            <ListRow
+              key={r.id}
+              leading={<IconTile icon={r.icon} tone="expense" />}
+              title={r.name}
+              subtitle={r.note}
+              trailing={<RowAmount value={inr(r.value)} />}
+            />
+          ))}
+        </ListCard>
+      )}
       <Text variant="meta" color="muted">
-        Investments and gold are updated by you, not synced. Tap any item to update its value.
+        Investments, gold and loans are added by you, not synced.
       </Text>
     </Screen>
   );

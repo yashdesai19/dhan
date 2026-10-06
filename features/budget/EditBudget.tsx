@@ -21,8 +21,9 @@ import { useToastStore } from '@/store/ui';
 import { space } from '@/theme';
 import { threeMonthAverage } from '@/utils/budget';
 import { groupIN, inr } from '@/utils/format';
+import { expenseCategoryIds } from '@/utils/summary';
 
-const PICKABLE = ['food', 'transport', 'shopping', 'bills', 'health', 'fun', 'home', 'gifts'];
+const PICKABLE = ['Food', 'Transport', 'Shopping', 'Bills', 'Health', 'Fun', 'Home', 'Gifts'];
 
 function Body({ categoryId, setCategoryId }: { categoryId: string; setCategoryId: (id: string) => void }) {
   const { close } = useSheet();
@@ -50,7 +51,7 @@ function Body({ categoryId, setCategoryId }: { categoryId: string; setCategoryId
   const [warn, setWarn] = useState((existing?.warnAtPercent ?? 90) === 90);
   const [custom, setCustom] = useState(false);
   const presets = [base, base + 500, base + 1000];
-  const free = PICKABLE.filter(
+  const free = expenseCategoryIds(money.categories, PICKABLE).filter(
     (id) => !budgets.data?.find((b) => b.month === month)?.categories.some((c) => c.categoryId === id),
   );
   const cat = money.categories.find((c) => c.id === categoryId);
@@ -162,8 +163,16 @@ function Body({ categoryId, setCategoryId }: { categoryId: string; setCategoryId
 
 export function EditBudgetSheet() {
   const { category } = useLocalSearchParams<{ category: string }>();
-  const [categoryId, setCategoryId] = useState(category === 'new' || !category ? 'health' : category);
   const { categories } = useMoneyData();
+  const [chosenId, setCategoryId] = useState(category === 'new' || !category ? '' : category);
+  // A new budget starts on Health, found by name since ids differ between the demo and the server
+  const categoryId =
+    chosenId ||
+    (
+      categories.find((c) => c.kind === 'expense' && c.short === 'Health') ??
+      categories.find((c) => c.kind === 'expense')
+    )?.id ||
+    '';
   const name = categories.find((c) => c.id === categoryId)?.short ?? '';
   return (
     <Sheet title={category === 'new' ? 'New budget' : `${name} budget`} label="Edit budget">

@@ -15,9 +15,33 @@ import {
   TypingIndicator,
 } from '@/components';
 import { useTopPadding } from '@/components/navigation/Screen';
-import { useAIResponses } from '@/data/queries';
+import { useAIResponses, useAskAI } from '@/data/queries';
 import { useMotionDuration } from '@/hooks/feedback';
 import { useAssistantStore } from '@/store/ui';
+import type { AIResponse } from '@/types/domain';
+
+/**
+ * The demo's suggestions come with their answers. From the API they come without, and each is
+ * answered by DHAN AI (from the user's own data) the first time it's asked.
+ */
+function useFetchAnswers(responses: AIResponse[], asked: AIResponse['id'][]) {
+  const askAI = useAskAI().mutateAsync;
+  const answers = useAssistantStore((s) => s.answers);
+  const setAnswer = useAssistantStore((s) => s.setAnswer);
+  const requested = useRef(new Set<string>());
+  useEffect(() => {
+    for (const id of asked) {
+      const r = responses.find((x) => x.id === id);
+      if (!r || r.answer || answers[id] || requested.current.has(id)) continue;
+      requested.current.add(id);
+      askAI(r.question)
+        .then((a) => setAnswer(id, a))
+        .catch((e: Error) => setAnswer(id, { error: e.message }))
+        .finally(() => requested.current.delete(id));
+    }
+  }, [asked, responses, answers, askAI, setAnswer]);
+  return (r: AIResponse) => (r.answer ? { answer: r.answer, stats: r.stats } : answers[r.id]);
+}
 import { fonts, iconSize, layout, motion, radius, size, space, textVariants, useColors } from '@/theme';
 
 export function AssistantScreen() {
@@ -31,6 +55,7 @@ export function AssistantScreen() {
   const doneTyping = useAssistantStore((s) => s.doneTyping);
   const scroll = useRef<ScrollView>(null);
   const delay = useMotionDuration(motion.typing);
+  const answerFor = useFetchAnswers(responses, asked);
 
   useEffect(() => {
     if (!typing) return;
@@ -75,11 +100,12 @@ export function AssistantScreen() {
           return (
             <View key={id} style={styles.turn}>
               <ChatBubble role="user" text={r.question} />
-              {last && typing ? (
-                <TypingIndicator />
-              ) : (
-                <ChatBubble role="ai" text={r.answer} stats={r.stats} />
-              )}
+              {(() => {
+                const a = answerFor(r);
+                if ((last && typing) || !a) return <TypingIndicator />;
+                if ('error' in a) return <ChatBubble role="ai" text={a.error} />;
+                return <ChatBubble role="ai" text={a.answer} stats={a.stats} />;
+              })()}
             </View>
           );
         })}

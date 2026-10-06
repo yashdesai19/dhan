@@ -164,3 +164,13 @@ export function applyEffects(
 ): Account[] {
   return accounts.map((a) => (fx[a.id] ? { ...a, balance: a.balance + direction * (fx[a.id] ?? 0) } : a));
 }
+
+/**
+ * Ids of the named expense categories, in the order given. The app's standard categories are found
+ * by name because their ids differ between the demo ('food') and the server (a UUID).
+ */
+export function expenseCategoryIds(categories: readonly Category[], names: readonly string[]): ID[] {
+  return names
+    .map((name) => categories.find((c) => c.kind === 'expense' && c.short === name)?.id)
+    .filter((id): id is ID => !!id);
+}

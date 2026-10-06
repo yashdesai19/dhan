@@ -96,12 +96,7 @@ export function GoalsScreen() {
       {insights.data && rows.some((r) => r.p.status === 'behind') ? (
         <Banner icon="sparkle">{insights.data.goals}</Banner>
       ) : null}
-      <Button
-        label="+ New goal"
-        kind="dashed"
-        size="md"
-        accessibilityHint="Creating goals is not available in this preview"
-      />
+      <Button label="+ New goal" kind="dashed" size="md" onPress={() => router.push('/goals/new')} />
     </Screen>
   );
 }

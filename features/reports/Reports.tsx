@@ -28,7 +28,7 @@ import { dayMonth, monthName, monthYear, shiftMonth } from '@/utils/dates';
 import { inr, signedPercent } from '@/utils/format';
 import { netWorth } from '@/utils/netWorth';
 import { compareWithPrevious, sixMonthSeries, topExpenses } from '@/utils/reports';
-import { monthTotals, spendingBreakdown } from '@/utils/summary';
+import { expenseCategoryIds, monthTotals, spendingBreakdown } from '@/utils/summary';
 
 type Period = 'month' | 'quarter' | 'year';
 
@@ -69,11 +69,12 @@ export function ReportsScreen() {
     const t = money.transactions;
     const totals = monthTotals(t, month);
     const breakdown = spendingBreakdown(t, month, money.categories);
+    const idOf = (name: string) => expenseCategoryIds(money.categories, [name])[0] ?? name;
     const compare = compareWithPrevious(h, t, month, [
       { id: 'total', label: 'Total spending' },
-      { id: 'food', label: 'Food' },
-      { id: 'transport', label: 'Transport' },
-      { id: 'shopping', label: 'Shopping' },
+      { id: idOf('Food'), label: 'Food' },
+      { id: idOf('Transport'), label: 'Transport' },
+      { id: idOf('Shopping'), label: 'Shopping' },
     ]);
     const nw = netWorth(money.accounts, assets.data ?? [], liabilities.data ?? []);
     const lastNw = h.at(-1)?.netWorth ?? nw.net;

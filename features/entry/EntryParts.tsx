@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { Icon, IconButton, SegmentedControl, Text, Touchable, type IconName } from '@/components';
 import { hitSlop, iconSize, radius, size, space, useColors } from '@/theme';
-import type { Account } from '@/types/domain';
+import { useEntryDraftStore } from '@/store/drafts';
+import type { Account, Category } from '@/types/domain';
 
 export type EntryKind = 'expense' | 'income' | 'transfer';
 
@@ -99,3 +101,36 @@ const styles = StyleSheet.create({
     gap: space[6],
   },
 });
+
+/**
+ * Entry drafts start from the demo's sample ids ('hdfc', 'food'). Against a real account those
+ * don't exist, so point any unknown id at the user's first active account or first listed
+ * category instead of sending an id the server will reject.
+ */
+export function useValidDraftIds(
+  accounts: readonly Account[],
+  categories: readonly Category[],
+  chipOrder?: { expense: string[]; income: string[] },
+) {
+  const draft = useEntryDraftStore((s) => s.draft);
+  const patch = useEntryDraftStore((s) => s.patch);
+  useEffect(() => {
+    const live = accounts.filter((a) => !a.archived);
+    if (live.length === 0) return;
+    const known = (id: string) => live.some((a) => a.id === id);
+    const fix: Partial<typeof draft> = {};
+    if (!known(draft.accountId)) fix.accountId = live[0]!.id;
+    if (!known(draft.fromId)) fix.fromId = live[0]!.id;
+    const from = fix.fromId ?? draft.fromId;
+    if (!known(draft.toId) || draft.toId === from) {
+      const other = live.find((a) => a.id !== from) ?? live[0]!;
+      fix.toId = other.id;
+    }
+    const isKind = (id: string, kind: string) => categories.some((c) => c.id === id && c.kind === kind);
+    const firstOf = (kind: 'expense' | 'income') =>
+      chipOrder?.[kind][0] ?? categories.find((c) => c.kind === kind)?.id;
+    if (categories.length && !isKind(draft.categoryId, 'expense')) fix.categoryId = firstOf('expense');
+    if (categories.length && !isKind(draft.incomeSourceId, 'income')) fix.incomeSourceId = firstOf('income');
+    if (Object.values(fix).some((v) => v !== undefined)) patch(fix);
+  }, [accounts, categories, chipOrder, draft, patch]);
+}

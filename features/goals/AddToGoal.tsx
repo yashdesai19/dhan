@@ -39,7 +39,10 @@ function Body() {
   const suggested = p?.monthly ?? 0;
   const [amount, setAmount] = useState(suggested);
   const [custom, setCustom] = useState(false);
-  const [accountId, setAccountId] = useState('hdfc');
+  const [chosenId, setAccountId] = useState('hdfc');
+  // 'hdfc' is the demo's default; on real data fall back to the user's first active account
+  const live = accounts.filter((a) => !a.archived);
+  const accountId = live.some((a) => a.id === chosenId) ? chosenId : (live[0]?.id ?? chosenId);
   if (!g || !p) return null;
 
   const presets = Array.from(new Set([5000, 10000, suggested].filter((v) => v > 0))).sort((a, b) => a - b);
