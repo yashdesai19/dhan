@@ -27,7 +27,11 @@
         "foregroundImage": "./assets/images/adaptive-foreground.png",
         "monochromeImage": "./assets/images/adaptive-monochrome.png",
         "backgroundColor": "#0B5D46"
-      }
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -69,6 +73,13 @@
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0549c1c1-dcb5-4cd7-a767-c547874cc82c"
+      }
+    },
+    "owner": "bansiii"
   }
 }

@@ -1,0 +1,14 @@
+node_modules/
+.expo/
+dist/
+ios/
+android/
+backend/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+__tests__/
+offline/
+*.log
+.env*
