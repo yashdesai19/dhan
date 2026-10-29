@@ -7,6 +7,9 @@
     "preview": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a"
       }
     },
     "production": {
@@ -14,7 +17,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DHAN_API_URL": "https://dhan-api-jqfp.onrender.com"
+        "EXPO_PUBLIC_DHAN_API_URL": "https://dhan-api-jqfp.onrender.com",
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a"
       }
     }
   }

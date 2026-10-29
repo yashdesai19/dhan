@@ -69,7 +69,8 @@
         {
           "faceIDPermission": "DHAN uses Face ID to unlock the app."
         }
-      ]
+      ],
+      "./plugins/withReducedApkSize.js"
     ],
     "experiments": {
       "typedRoutes": false
