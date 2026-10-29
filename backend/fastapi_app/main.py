@@ -6,7 +6,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from pathlib import Path
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from fastapi_app.ai.providers import AIProviderUnavailable
 from fastapi_app.api.v1.endpoints import (
@@ -143,6 +145,20 @@ app.include_router(ai.router)
 
 # Mount versioned API routes (/api/v1/...)
 app.include_router(api_v1_router, prefix="/api")
+
+# Mount static landing page & downloads
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+if STATIC_DIR.exists():
+    if (STATIC_DIR / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="static_assets")
+    if (STATIC_DIR / "downloads").exists():
+        app.mount("/downloads", StaticFiles(directory=str(STATIC_DIR / "downloads")), name="static_downloads")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_landing_page() -> FileResponse:
+        index_file = STATIC_DIR / "index.html"
+        return FileResponse(index_file)
+
 
 
 if __name__ == "__main__":
