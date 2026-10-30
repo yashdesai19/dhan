@@ -68,7 +68,7 @@ export function Screen({
       : bottom === 'footer'
         ? layout.bottomScrollPad + Math.max(0, insets.bottom - 34)
         : space[40] + insets.bottom;
-  const content = [{ paddingTop, paddingBottom, paddingHorizontal: gutter, gap }, contentStyle];
+  const content = [{ paddingTop, paddingBottom, paddingHorizontal: gutter, gap, flexGrow: 1 }, contentStyle];
   const body = scroll ? (
     <ScrollView
       testID={testID}

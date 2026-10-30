@@ -1,6 +1,7 @@
 // Shared component library (spec §3). Screens import from here.
 export { Icon, type IconName } from './icons/Icon';
 export { Logo } from './icons/Logo';
+export { GoogleLogo, AppleLogo } from './icons/BrandIcons';
 export { Text, Money } from './ui/Text';
 export { Touchable } from './ui/Touchable';
 export { Button, SmallButton, TextButton, IconButton } from './ui/Button';

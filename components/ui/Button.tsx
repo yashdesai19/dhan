@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon, type IconName } from '@/components/icons/Icon';
@@ -15,6 +16,8 @@ export interface ButtonProps {
   kind?: ButtonKind;
   size?: ButtonSize;
   icon?: IconName;
+  /** Custom leading element, e.g. a brand logo */
+  leading?: ReactNode;
   disabled?: boolean;
   loading?: boolean;
   /** Fill the remaining width in a row. */
@@ -33,6 +36,7 @@ export function Button({
   kind = 'primary',
   size: sz = 'lg',
   icon,
+  leading,
   disabled,
   loading,
   grow,
@@ -57,7 +61,7 @@ export function Button({
       {...rest}
       disabled={inactive}
       onPress={() => {
-        if (kind === 'primary') haptics.light();
+        haptics.light();
         onPress?.();
       }}
       accessibilityLabel={label}
@@ -80,7 +84,7 @@ export function Button({
         <ActivityIndicator color={c[fg]} />
       ) : (
         <>
-          {icon ? <Icon name={icon} size={iconSize.lg} color={fg} strokeWidth={2} /> : null}
+          {leading ? leading : icon ? <Icon name={icon} size={iconSize.lg} color={fg} strokeWidth={2} /> : null}
           <Text variant={sz === 'sm' ? 'small' : 'section'} weight="semibold" color={fg} numberOfLines={1}>
             {label}
           </Text>

@@ -5,6 +5,8 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
+  AppleLogo,
+  GoogleLogo,
   Banner,
   Button,
   CheckboxBox,
@@ -27,6 +29,7 @@ const demo = <T,>(value: T, blank: T): T => (isApiMode ? blank : value);
 const PAUSE_MINUTES = isApiMode ? 15 : 5;
 import { useAccounts, useRequestReset, useSignIn, useSignUp, useUpsertAccount } from '@/data/queries';
 import { useSessionStore } from '@/store/session';
+import { useToastStore } from '@/store/ui';
 import { iconSize, layout, space, useColors } from '@/theme';
 import type { AccountType } from '@/types/domain';
 import { groupIN } from '@/utils/format';
@@ -60,7 +63,9 @@ function Divider() {
 }
 
 export function LoginScreen() {
+  const c = useColors();
   const router = useRouter();
+  const showToast = useToastStore((s) => s.show);
   const signIn = useSignIn();
   const startSession = useSessionStore((s) => s.signIn);
   const [email, setEmail] = useState(demo('yash@example.com', ''));
@@ -90,9 +95,9 @@ export function LoginScreen() {
 
   const pwError = attemptsLeft !== null ? 'That password doesn’t match. Try again or reset it.' : null;
   return (
-    <Screen top="stack" gutter={layout.gutterAuth} gap={space[20]} keyboard>
+    <Screen top="stack" gutter={layout.gutterAuth} gap={space[16]} keyboard>
       <View style={styles.heroTop}>
-        <Logo size={52} radius={15} />
+        <Logo size={48} radius={14} />
         <Text variant="displayXl" accessibilityRole="header">
           Welcome back
         </Text>
@@ -138,12 +143,26 @@ export function LoginScreen() {
       <Button
         label="Continue with Google"
         kind="secondary"
-        accessibilityHint="Not available in this preview"
+        leading={<GoogleLogo size={20} />}
+        accessibilityHint="Sign in with your Google account"
+        onPress={() =>
+          showToast({
+            message: 'Google sign-in is coming in the next update.',
+            placement: 'bottom',
+          })
+        }
       />
       <Button
         label="Continue with Apple"
         kind="secondary"
-        accessibilityHint="Not available in this preview"
+        leading={<AppleLogo size={20} color={c.ink} />}
+        accessibilityHint="Sign in with your Apple account"
+        onPress={() =>
+          showToast({
+            message: 'Apple sign-in is coming in the next update.',
+            placement: 'bottom',
+          })
+        }
       />
       <View style={styles.inline}>
         <Text variant="body" color="muted">
@@ -434,9 +453,9 @@ export function CreateFirstAccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  heroTop: { gap: space[18], paddingTop: space[24] },
+  heroTop: { gap: space[10], paddingTop: space[8] },
   eye: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -space[10] },
-  forgot: { alignItems: 'flex-end', marginTop: -space[12] },
+  forgot: { alignItems: 'flex-end', marginTop: -space[10] },
   or: { flexDirection: 'row', alignItems: 'center', gap: space[12] },
   orLine: { flex: 1, height: 1 },
   inline: {
@@ -445,6 +464,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[6],
     flexWrap: 'wrap',
+    paddingTop: space[4],
+    paddingBottom: space[20],
   },
   gap10: { gap: space[10] },
   gap8: { gap: space[8] },
