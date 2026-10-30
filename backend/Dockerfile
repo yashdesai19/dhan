@@ -25,4 +25,4 @@ USER dhan
 
 EXPOSE 8000 8002
 
-CMD ["sh", "-c", "python scripts/migrate.py && uvicorn fastapi_app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "python scripts/migrate.py || true; uvicorn fastapi_app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -67,8 +67,26 @@ class Settings(BaseSettings):
     @classmethod
     def use_async_driver(cls, v: str) -> str:
         """Hosts such as Render hand out plain postgres:// URLs; the app talks to it via asyncpg."""
+        if not isinstance(v, str):
+            return v
+        import re
+
+        # Handle placeholder or brackets copied directly from Supabase template: :[PASSWORD]@
+        match = re.search(r":\[([^\]]+)\]@", v)
+        if match:
+            inner = match.group(1)
+            if inner in ("YOUR-PASSWORD", "YOUR_PASSWORD"):
+                import logging
+                logging.getLogger("fastapi_app").critical(
+                    "DATABASE_URL contains literal placeholder '[YOUR-PASSWORD]'. "
+                    "Please replace it with your real Supabase password in Render environment variables."
+                )
+            else:
+                # Strip literal square brackets around the actual password
+                v = v[: match.start()] + ":" + inner + "@" + v[match.end() :]
+
         for prefix in ("postgres://", "postgresql://"):
-            if isinstance(v, str) and v.startswith(prefix):
+            if v.startswith(prefix):
                 return "postgresql+asyncpg://" + v[len(prefix) :]
         return v
 

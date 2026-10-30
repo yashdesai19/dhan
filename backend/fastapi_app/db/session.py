@@ -14,12 +14,25 @@ from fastapi_app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+connect_args = {}
+if "asyncpg" in settings.DATABASE_URL:
+    connect_args = {
+        "timeout": 15,
+        "command_timeout": 30,
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    }
+
 # Create async engine for PostgreSQL via asyncpg
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DB_ECHO,
     future=True,
     pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    pool_recycle=300,
+    connect_args=connect_args,
 )
 
 # Async session factory
