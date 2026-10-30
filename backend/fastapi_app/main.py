@@ -7,8 +7,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from fastapi.responses import FileResponse, JSONResponse
+import mimetypes
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+
+# Register MIME types for mobile application packages
+mimetypes.add_type("application/vnd.android.package-archive", ".apk")
+mimetypes.add_type("application/octet-stream", ".ipa")
 
 from fastapi_app.ai.providers import AIProviderUnavailable
 from fastapi_app.api.v1.endpoints import (
@@ -95,7 +100,11 @@ async def security_headers(request: Request, call_next):  # type: ignore[no-unty
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
-    response.headers.setdefault("Cache-Control", "no-store")
+    path = request.url.path
+    if path.startswith("/downloads") or path.startswith("/assets") or path == "/" or path.endswith(".apk") or path.endswith(".ipa"):
+        response.headers["Cache-Control"] = "public, max-age=3600"
+    else:
+        response.headers.setdefault("Cache-Control", "no-store")
     if settings.is_production:
         response.headers.setdefault(
             "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
@@ -151,6 +160,27 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 if STATIC_DIR.exists():
     if (STATIC_DIR / "assets").exists():
         app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="static_assets")
+
+    @app.get("/downloads/dhan.apk", include_in_schema=False)
+    @app.get("/download-apk", include_in_schema=False)
+    async def serve_dhan_apk() -> Response:
+        apk_file = STATIC_DIR / "downloads" / "dhan.apk"
+        if apk_file.exists() and apk_file.stat().st_size > 1000:
+            return FileResponse(
+                path=str(apk_file),
+                filename="dhan.apk",
+                media_type="application/vnd.android.package-archive",
+                headers={
+                    "Content-Disposition": 'attachment; filename="dhan.apk"',
+                    "Content-Type": "application/vnd.android.package-archive",
+                    "Cache-Control": "public, max-age=86400",
+                },
+            )
+        return RedirectResponse(
+            "https://expo.dev/artifacts/eas/CMnl21NpllseCJ50GJV43II8t1FOxSVhlBMQKj_EXk8.apk",
+            status_code=307,
+        )
+
     if (STATIC_DIR / "downloads").exists():
         app.mount("/downloads", StaticFiles(directory=str(STATIC_DIR / "downloads")), name="static_downloads")
 
