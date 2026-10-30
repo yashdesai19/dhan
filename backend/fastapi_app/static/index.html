@@ -98,7 +98,7 @@
       </div>
 
       <!-- Header "Get App" Button (Triggers 2-Option Modal directly) -->
-      <button onclick="openDownloadModal()" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-dhan-600 hover:from-emerald-400 hover:to-dhan-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+      <button onclick="getApp()" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-dhan-600 hover:from-emerald-400 hover:to-dhan-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
         </svg>
@@ -136,7 +136,7 @@
           <div class="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
             
             <!-- 1. Android Direct Download Button -->
-            <a href="downloads/dhan.apk" download="dhan.apk" onclick="triggerToast('Android (.apk)')" class="w-full sm:w-auto min-w-[240px] group relative flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-b from-[#133026] to-[#0A1D16] border-2 border-emerald-500/60 hover:border-emerald-400 shadow-xl shadow-emerald-950/80 transition-all transform hover:-translate-y-1 active:scale-[0.98]">
+            <a href="download-apk" download="dhan.apk" onclick="triggerToast('Android (.apk)')" class="w-full sm:w-auto min-w-[240px] group relative flex items-center gap-4 px-6 py-4 rounded-2xl bg-gradient-to-b from-[#133026] to-[#0A1D16] border-2 border-emerald-500/60 hover:border-emerald-400 shadow-xl shadow-emerald-950/80 transition-all transform hover:-translate-y-1 active:scale-[0.98]">
               <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
                 <!-- Android SVG -->
                 <svg class="w-7 h-7 fill-current" viewBox="0 0 24 24">
@@ -316,7 +316,7 @@
       <div class="mt-6 space-y-4">
         
         <!-- Direct Android Option -->
-        <a href="downloads/dhan.apk" download="dhan.apk" onclick="triggerToast('Android (.apk)'); closeDownloadModal();" class="flex items-center gap-4 w-full p-4 rounded-2xl bg-gradient-to-r from-[#143429] to-[#0A1F18] border border-emerald-500/50 hover:border-emerald-400 text-left transition transform hover:scale-[1.02] shadow-lg group">
+        <a href="download-apk" download="dhan.apk" onclick="triggerToast('Android (.apk)'); closeDownloadModal();" class="flex items-center gap-4 w-full p-4 rounded-2xl bg-gradient-to-r from-[#143429] to-[#0A1F18] border border-emerald-500/50 hover:border-emerald-400 text-left transition transform hover:scale-[1.02] shadow-lg group">
           <div class="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
               <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4116 13.8533 8.0818 12 8.0818s-3.5902.3298-5.1367.8679L4.841 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/>
@@ -388,6 +388,15 @@
     }
 
     // Modal Handlers
+    // Android phones get the latest APK straight away; other devices choose a platform
+    function getApp() {
+      if (/Android/i.test(navigator.userAgent)) {
+        triggerToast('Android (.apk)');
+        window.location.href = 'download-apk?v=' + Date.now();
+      } else {
+        openDownloadModal();
+      }
+    }
     function openDownloadModal() {
       document.getElementById("get-app-modal").classList.remove("hidden");
     }

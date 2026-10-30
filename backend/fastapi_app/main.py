@@ -190,7 +190,8 @@ if STATIC_DIR.exists():
                 headers={
                     "Content-Disposition": 'attachment; filename="dhan.apk"',
                     "Content-Type": "application/vnd.android.package-archive",
-                    "Cache-Control": "public, max-age=86400",
+                    # Always revalidate, so a new release is what the next download gets
+                    "Cache-Control": "no-cache",
                 },
             )
         return RedirectResponse(
