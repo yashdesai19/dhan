@@ -19,6 +19,7 @@ import { useNotifications, useUser } from '@/data/queries';
 import { useSplits } from '@/features/splits/useSplits';
 import { useMoneyData } from '@/features/shared/hooks';
 import { iconSize, radius, space, useColors } from '@/theme';
+import { FEATURES } from '@/utils/features';
 import { inr } from '@/utils/format';
 
 interface Item {
@@ -81,22 +82,24 @@ export function MoreScreen() {
         </View>
         <Icon name="chevR" size={iconSize.lg} color="faint" strokeWidth={2} />
       </Touchable>
-      <Touchable
-        onPress={() => router.push('/assistant')}
-        style={[styles.ai, { backgroundColor: c.primarySoft }]}
-        accessibilityLabel="Ask DHAN AI"
-      >
-        <Icon name="sparkle" size={iconSize.xxl} color="primary" />
-        <View style={styles.grow}>
-          <Text variant="body" weight="semibold">
-            Ask DHAN AI
-          </Text>
-          <Text variant="meta" color="muted">
-            “How much did I save this month?”
-          </Text>
-        </View>
-        <Icon name="chevR" size={iconSize.lg} color="faint" strokeWidth={2} />
-      </Touchable>
+      {FEATURES.DHAN_AI && (
+        <Touchable
+          onPress={() => router.push('/assistant')}
+          style={[styles.ai, { backgroundColor: c.primarySoft }]}
+          accessibilityLabel="Ask DHAN AI"
+        >
+          <Icon name="sparkle" size={iconSize.xxl} color="primary" />
+          <View style={styles.grow}>
+            <Text variant="body" weight="semibold">
+              Ask DHAN AI
+            </Text>
+            <Text variant="meta" color="muted">
+              “How much did I save this month?”
+            </Text>
+          </View>
+          <Icon name="chevR" size={iconSize.lg} color="faint" strokeWidth={2} />
+        </Touchable>
+      )}
       <Section
         label="Money"
         items={[

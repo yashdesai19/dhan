@@ -40,6 +40,7 @@ import { budgetStatus } from '@/utils/budget';
 import { dayMonth, monthName, monthOf } from '@/utils/dates';
 import { describeTransaction } from '@/utils/describe';
 import { inr, plural } from '@/utils/format';
+import { FEATURES } from '@/utils/features';
 import { overallPosition } from '@/utils/splits';
 import { monthTotals, netBalance, sortNewestFirst, spendingBreakdown } from '@/utils/summary';
 
@@ -194,11 +195,13 @@ export function HomeScreen() {
           </Text>
           <Text variant="greeting">{firstName}</Text>
         </View>
-        <IconButton
-          icon="sparkle"
-          accessibilityLabel="Ask DHAN AI"
-          onPress={() => router.push('/assistant')}
-        />
+        {FEATURES.DHAN_AI && (
+          <IconButton
+            icon="sparkle"
+            accessibilityLabel="Ask DHAN AI"
+            onPress={() => router.push('/assistant')}
+          />
+        )}
         <IconButton
           icon="bell"
           accessibilityLabel={unread ? 'Notifications, unread' : 'Notifications'}
