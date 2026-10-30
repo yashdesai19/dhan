@@ -28,11 +28,16 @@ function shouldRetry(failures: number, error: unknown): boolean {
   return retryable && failures < 2;
 }
 
+/** How long the on-device copy of the data stays usable; also how long queries stay cached. */
+export const PERSIST_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
 export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 60_000,
+        // Kept at least as long as the saved copy, so a cold start shows the last data at once
+        gcTime: PERSIST_MAX_AGE_MS,
         retry: shouldRetry,
         retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
       },

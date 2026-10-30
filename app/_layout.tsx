@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { QueryClientProvider } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { isRunningInExpoGo } from 'expo';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -12,7 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { setSessionExpiredHandler } from '@/data/api/client';
-import { bindAppFocus, createQueryClient } from '@/data/queries';
+import { PERSIST_MAX_AGE_MS, bindAppFocus, createQueryClient } from '@/data/queries';
 import { useSessionStore } from '@/store/session';
 import { AppUpdateModal } from '@/components';
 import { fontFiles, ThemeProvider, useTheme } from '@/theme';
@@ -23,6 +25,10 @@ if (!isRunningInExpoGo()) {
     SplashScreen.setOptions?.({ duration: 250, fade: true });
   } catch {}
 }
+
+// The last data the user saw, kept on the device: a cold start (and a sleeping server) shows it
+// at once while fresh data loads. Signing out clears the cache, and with it this copy.
+const queryPersister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'dhan-query-cache' });
 
 function ThemedStack() {
   const { scheme, colors } = useTheme();
@@ -69,13 +75,16 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.fill}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister: queryPersister, maxAge: PERSIST_MAX_AGE_MS }}
+        >
           <ThemeProvider>
             <BottomSheetModalProvider>
               <ThemedStack />
             </BottomSheetModalProvider>
           </ThemeProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
