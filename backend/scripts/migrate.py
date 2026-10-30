@@ -8,7 +8,6 @@ has a schema just runs the remaining Alembic migrations.
 
 import asyncio
 import importlib.util
-import logging
 import sys
 from pathlib import Path
 
@@ -23,8 +22,6 @@ from alembic.config import Config  # noqa: E402
 import fastapi_app.models  # noqa: E402, F401
 from fastapi_app.db.base import Base  # noqa: E402
 from fastapi_app.db.session import engine  # noqa: E402
-
-logger = logging.getLogger("scripts.migrate")
 
 # Final form of the transaction-type check after the phase 13 split migration
 TRANSACTION_TYPE_CHECK = "transaction_type IN ('expense', 'income', 'transfer', 'split')"
@@ -56,15 +53,11 @@ async def _bootstrap_if_empty() -> bool:
 
 def main() -> None:
     config = Config(str(BACKEND_DIR / "alembic.ini"))
-    try:
-        if asyncio.run(_bootstrap_if_empty()):
-            print("Empty database: created schema from models and stamped Alembic head.")
-            command.stamp(config, "head")
-        else:
-            command.upgrade(config, "head")
-    except Exception as exc:
-        print(f"Warning: Database migrations could not be run: {exc}")
-        print("Continuing startup so web service and landing page remain accessible...")
+    if asyncio.run(_bootstrap_if_empty()):
+        print("Empty database: created schema from models and stamped Alembic head.")
+        command.stamp(config, "head")
+    else:
+        command.upgrade(config, "head")
 
 
 if __name__ == "__main__":
