@@ -194,7 +194,7 @@ if STATIC_DIR.exists():
                 },
             )
         return RedirectResponse(
-            "https://expo.dev/artifacts/eas/eCLpQ0c6LXl449lt34cOwDNEASfRCJsh4HrG75TUnys.apk",
+            "https://expo.dev/artifacts/eas/EUUv23dKVS9EQRKhuvkcFN2q7zLUPH3Adte9gUlVI-I.apk",
             status_code=307,
         )
 
