@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { setSessionExpiredHandler } from '@/data/api/client';
 import { bindAppFocus, createQueryClient } from '@/data/queries';
 import { useSessionStore } from '@/store/session';
+import { AppUpdateModal } from '@/components';
 import { fontFiles, ThemeProvider, useTheme } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
@@ -40,6 +41,7 @@ function ThemedStack() {
           options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
         />
       </Stack>
+      <AppUpdateModal />
     </View>
   );
 }

@@ -136,6 +136,21 @@ async def health_check() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
+@app.get("/app-version", tags=["App Version"])
+@app.get("/api/v1/app-version", tags=["App Version"])
+async def get_app_version() -> dict:
+    """Return latest published app version, download link, and update requirements."""
+    import os
+    latest = os.getenv("DHAN_LATEST_APP_VERSION", "1.0.1")
+    return {
+        "latest_version": latest,
+        "min_version": "1.0.0",
+        "download_url": "https://dhan-api-jqfp.onrender.com/downloads/dhan.apk",
+        "release_notes": "Latest updates, improved performance, and bug fixes.",
+        "force_update": False,
+    }
+
+
 # Mount direct root endpoints (/auth, /accounts, /categories, /transactions, /budgets, /groups, /splits, /settlements, /people, /goals, /recurring, /reports, /net-worth, /ai)
 app.include_router(auth.router)
 app.include_router(accounts.router)

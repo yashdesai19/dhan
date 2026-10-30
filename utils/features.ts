@@ -9,3 +9,4 @@ export const FEATURES = {
    */
   DHAN_AI: false,
 };
+

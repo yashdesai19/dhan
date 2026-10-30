@@ -39,4 +39,5 @@ export { TabBar, useTabBarHeight } from './navigation/TabBar';
 export { Sheet, ConfirmSheet, useSheet } from './overlays/Sheet';
 export { ToastHost } from './overlays/Toast';
 export { StickyFooter } from './overlays/StickyFooter';
+export { AppUpdateModal } from './overlays/AppUpdateModal';
 export { ChatBubble, TypingIndicator } from './chat/Chat';
