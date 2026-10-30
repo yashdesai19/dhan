@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, StyleSheet, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as IntentLauncher from 'expo-intent-launcher';
 
 import { API_URL } from '@/data/api/config';
 import { Button } from '@/components/ui/Button';
@@ -38,6 +40,9 @@ export function AppUpdateModal() {
   const c = useColors();
   const [updateInfo, setUpdateInfo] = useState<AppVersionResponse | null>(null);
   const [visible, setVisible] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -72,14 +77,73 @@ export function AppUpdateModal() {
 
   const currentVersion = Constants.expoConfig?.version ?? '1.0.0';
 
-  const handleUpdate = () => {
-    if (updateInfo.download_url) {
+  const handleUpdate = async () => {
+    if (!updateInfo.download_url) return;
+
+    // On Android, download directly within the app and launch Package Installer
+    if (Platform.OS === 'android') {
+      try {
+        setDownloading(true);
+        setStatusText('Downloading update...');
+        setProgress(0);
+
+        const targetPath = `${FileSystem.cacheDirectory}dhan_update.apk`;
+
+        // Clean up previous APK cache if it exists
+        const fileInfo = await FileSystem.getInfoAsync(targetPath);
+        if (fileInfo.exists) {
+          await FileSystem.deleteAsync(targetPath, { idempotent: true });
+        }
+
+        const downloadResumable = FileSystem.createDownloadResumable(
+          updateInfo.download_url,
+          targetPath,
+          {},
+          (downloadProgress) => {
+            const expected = downloadProgress.totalBytesExpectedToWrite;
+            if (expected > 0) {
+              const pct = Math.min(
+                100,
+                Math.round((downloadProgress.totalBytesWritten / expected) * 100)
+              );
+              setProgress(pct);
+            }
+          }
+        );
+
+        const result = await downloadResumable.downloadAsync();
+        if (!result || !result.uri) {
+          throw new Error('Download failed');
+        }
+
+        setStatusText('Opening installer...');
+        setProgress(100);
+
+        // Convert file URI to Android Content URI
+        const contentUri = await FileSystem.getContentUriAsync(result.uri);
+
+        // Prompt native Android package installer
+        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+          data: contentUri,
+          type: 'application/vnd.android.package-archive',
+          flags: 1, // Intent.FLAG_GRANT_READ_URI_PERMISSION
+        });
+
+        setDownloading(false);
+      } catch (err) {
+        console.warn('In-app installer error, falling back to browser:', err);
+        setDownloading(false);
+        // Fallback to browser download if permission or intent fails
+        void Linking.openURL(updateInfo.download_url);
+      }
+    } else {
+      // iOS / Web fallback
       void Linking.openURL(updateInfo.download_url);
     }
   };
 
   const handleDismiss = () => {
-    if (!updateInfo.force_update) {
+    if (!updateInfo.force_update && !downloading) {
       setVisible(false);
     }
   };
@@ -106,21 +170,49 @@ export function AppUpdateModal() {
           </Text>
 
           <Text variant="body" color="muted" align="center" style={styles.notes}>
-            {updateInfo.release_notes || 'A fresh update of DHAN is available with latest improvements and bug fixes.'}
+            {downloading
+              ? `${statusText} (${progress}%)`
+              : updateInfo.release_notes || 'A fresh update of DHAN is available with latest improvements and bug fixes.'}
           </Text>
 
-          <Text variant="meta" color="faint" align="center" style={styles.versionSub}>
-            Current: v{currentVersion} → New: v{updateInfo.latest_version}
-          </Text>
+          {downloading ? (
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressBarBg, { backgroundColor: c.track }]}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { backgroundColor: c.primary, width: `${progress}%` },
+                  ]}
+                />
+              </View>
+              <Text variant="meta" color="muted" align="center" style={styles.progressText}>
+                {progress}% downloaded
+              </Text>
+            </View>
+          ) : (
+            <Text variant="meta" color="faint" align="center" style={styles.versionSub}>
+              Current: v{currentVersion} → New: v{updateInfo.latest_version}
+            </Text>
+          )}
 
           <View style={styles.buttonCol}>
-            <Button
-              label="Update Now"
-              kind="primary"
-              icon="download"
-              onPress={handleUpdate}
-            />
-            {!updateInfo.force_update && (
+            {downloading ? (
+              <Button
+                label={`Downloading... ${progress}%`}
+                kind="primary"
+                disabled
+                loading
+              />
+            ) : (
+              <Button
+                label="Update Now"
+                kind="primary"
+                icon="download"
+                onPress={handleUpdate}
+              />
+            )}
+
+            {!updateInfo.force_update && !downloading && (
               <Button
                 label="Maybe Later"
                 kind="ghost"
@@ -177,6 +269,24 @@ const styles = StyleSheet.create({
   },
   versionSub: {
     marginBottom: space[20],
+  },
+  progressContainer: {
+    width: '100%',
+    marginVertical: space[16],
+    alignItems: 'center',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressText: {
+    marginTop: space[8],
   },
   buttonCol: {
     width: '100%',
