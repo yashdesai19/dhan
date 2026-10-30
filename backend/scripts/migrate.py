@@ -57,26 +57,21 @@ async def _bootstrap_if_empty() -> bool:
     return True
 
 
-async def run_migrations_with_timeout() -> None:
+def main() -> None:
     print("[MIGRATE] Starting database migrations check...", flush=True)
     config = Config(str(BACKEND_DIR / "alembic.ini"))
-    is_empty = await asyncio.wait_for(_bootstrap_if_empty(), timeout=20.0)
-    if is_empty:
-        print("[MIGRATE] Stamping Alembic head...", flush=True)
-        command.stamp(config, "head")
-    else:
-        print("[MIGRATE] Running Alembic upgrade to head...", flush=True)
-        command.upgrade(config, "head")
-    print("[MIGRATE] Database migrations completed successfully! \u2705", flush=True)
-
-
-def main() -> None:
     try:
-        asyncio.run(run_migrations_with_timeout())
+        is_empty = asyncio.run(asyncio.wait_for(_bootstrap_if_empty(), timeout=20.0))
+        if is_empty:
+            print("[MIGRATE] Stamping Alembic head...", flush=True)
+            command.stamp(config, "head")
+        else:
+            print("[MIGRATE] Running Alembic upgrade to head...", flush=True)
+            command.upgrade(config, "head")
+        print("[MIGRATE] Database migrations completed successfully! \u2705", flush=True)
     except Exception as exc:
         print(f"\n[MIGRATE ERROR] Migration could not complete: {exc}", flush=True)
         print("[MIGRATE ERROR] Web server will proceed to start so landing page and downloads stay active.\n", flush=True)
-        sys.exit(1)
 
 
 if __name__ == "__main__":
