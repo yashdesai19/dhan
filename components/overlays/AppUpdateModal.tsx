@@ -4,6 +4,7 @@ import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
+import * as Updates from 'expo-updates';
 
 import { API_URL } from '@/data/api/config';
 import { Button } from '@/components/ui/Button';
@@ -43,11 +44,33 @@ export function AppUpdateModal() {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('');
+  // 'ota': new app code published with `eas update`, applied in place with a restart.
+  // 'apk': a new native build, which has to be downloaded and installed.
+  const [kind, setKind] = useState<'ota' | 'apk'>('apk');
 
   useEffect(() => {
     let active = true;
 
     async function checkVersion() {
+      try {
+        if (Updates.isEnabled && !__DEV__) {
+          const check = await Updates.checkForUpdateAsync();
+          if (check.isAvailable) {
+            if (!active) return;
+            setKind('ota');
+            setUpdateInfo({
+              latest_version: Constants.expoConfig?.version ?? '1.0.0',
+              download_url: '',
+              release_notes: 'New improvements and fixes are ready. Tap Update to restart DHAN with them.',
+            });
+            setVisible(true);
+            return;
+          }
+        }
+      } catch {
+        // No update server reachable: fall through to the APK version check
+      }
+
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 6000);
@@ -78,6 +101,20 @@ export function AppUpdateModal() {
   const currentVersion = Constants.expoConfig?.version ?? '1.0.0';
 
   const handleUpdate = async () => {
+    if (kind === 'ota') {
+      try {
+        setDownloading(true);
+        setStatusText('Downloading update...');
+        setProgress(0);
+        await Updates.fetchUpdateAsync();
+        setProgress(100);
+        await Updates.reloadAsync();
+      } catch (err) {
+        console.warn('Update download failed:', err);
+        setDownloading(false);
+      }
+      return;
+    }
     if (!updateInfo.download_url) return;
 
     // On Android, download directly within the app and launch Package Installer

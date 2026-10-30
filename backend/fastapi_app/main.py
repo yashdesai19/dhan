@@ -141,7 +141,9 @@ async def health_check() -> HealthResponse:
 async def get_app_version() -> dict:
     """Return latest published app version, download link, and update requirements."""
     import os
-    latest = os.getenv("DHAN_LATEST_APP_VERSION", "1.0.1")
+    # Raise this (and app.json "version") only when a new APK has to be installed; code-only
+    # changes reach installed apps through `eas update` instead
+    latest = os.getenv("DHAN_LATEST_APP_VERSION", "1.0.0")
     return {
         "latest_version": latest,
         "min_version": "1.0.0",

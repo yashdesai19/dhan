@@ -82,6 +82,14 @@
         "projectId": "0549c1c1-dcb5-4cd7-a767-c547874cc82c"
       }
     },
-    "owner": "bansiii"
+    "owner": "bansiii",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0549c1c1-dcb5-4cd7-a767-c547874cc82c",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    }
   }
 }
