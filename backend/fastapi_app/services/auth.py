@@ -24,6 +24,7 @@ from fastapi_app.core.security import (
     hash_token,
     verify_password,
 )
+from fastapi_app.models.account import Account
 from fastapi_app.models.token import PasswordResetToken, RefreshToken
 from fastapi_app.models.user import User
 from fastapi_app.repositories.user import UserRepository
@@ -78,6 +79,10 @@ class AuthService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email is already registered.",
             ) from None
+
+        # Every expense and income needs an account: start each user with a Cash wallet so the
+        # first entry works straight after sign-up
+        self.session.add(Account(user_id=user.id, name="Cash", type="cash"))
 
         # Generate tokens
         access_token = create_access_token(

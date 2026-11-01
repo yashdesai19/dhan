@@ -105,14 +105,17 @@ function provisionCategories(): Promise<void> {
   provisioning ??= (async () => {
     const wire = await api.get<WireCategory[]>('/categories');
     const owned = new Set(wire.filter((c) => c.user_id).map((c) => categoryKey(c.name, c.category_type)));
-    for (const c of STANDARD_CATEGORIES.filter((x) => !owned.has(categoryKey(x.name, x.kind)))) {
-      try {
-        await api.post('/categories', { name: c.name, category_type: c.kind, icon: c.icon });
-      } catch (e) {
-        // A same-named category already covers it
-        if (!(e instanceof ApiError) || e.code !== 'invalid') throw e;
-      }
-    }
+    // All at once: one by one, a new user's first launch waited on each round trip in turn
+    await Promise.all(
+      STANDARD_CATEGORIES.filter((x) => !owned.has(categoryKey(x.name, x.kind))).map(async (c) => {
+        try {
+          await api.post('/categories', { name: c.name, category_type: c.kind, icon: c.icon });
+        } catch (e) {
+          // A same-named category already covers it
+          if (!(e instanceof ApiError) || e.code !== 'invalid') throw e;
+        }
+      }),
+    );
   })().catch((e: unknown) => {
     provisioning = null; // try again next time
     throw e;
@@ -413,10 +416,15 @@ function requireAmount(amount: Rupees) {
 async function addEntry(type: 'expense' | 'income', e: NewEntry): Promise<Transaction> {
   requireAmount(e.amount);
   const accounts = await fetchAccounts();
-  const validAccount = accounts.find((a) => a.id === e.accountId) ?? accounts.filter((a) => !a.archived)[0];
-  if (!validAccount) {
-    throw new ApiError('Please add an account before adding a transaction.', 'invalid');
-  }
+  // Users who signed up before every account started with Cash may have none: make it now
+  // rather than refuse their first entry
+  const validAccount =
+    accounts.find((a) => a.id === e.accountId) ??
+    accounts.filter((a) => !a.archived)[0] ??
+    toAccount(
+      await api.post<WireAccount>('/accounts', { name: 'Cash', type: 'cash', balance: '0', archived: false }),
+      istToday(),
+    );
   const category = (await fetchCategories()).find((c) => c.id === e.categoryId);
   return created(
     await api.post<WireTransaction>('/transactions', {
