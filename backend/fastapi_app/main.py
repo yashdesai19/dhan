@@ -130,7 +130,7 @@ async def ai_unavailable_handler(request: Request, exc: AIProviderUnavailable) -
     )
 
 
-@app.get("/health", response_model=HealthResponse, tags=["Health"])
+@app.api_route("/health", methods=["GET", "HEAD"], response_model=HealthResponse, tags=["Health"])
 async def health_check() -> HealthResponse:
     """Root health check endpoint returning { 'status': 'ok' }."""
     return HealthResponse(status="ok")
