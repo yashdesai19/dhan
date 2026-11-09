@@ -14,7 +14,7 @@ import {
   Toggle,
   TopBar,
 } from '@/components';
-import { usePrefsStore, type ThemePref } from '@/store/prefs';
+import { appLockAvailable, usePrefsStore, type ThemePref } from '@/store/prefs';
 import { space } from '@/theme';
 
 function ToggleRow({
@@ -62,8 +62,8 @@ export function SettingsScreen() {
       <Group label="Security">
         <ListRow
           leading={<IconTile icon="lock" size="sm" />}
-          title="Security and app lock"
-          subtitle={p.appLock ? 'Face ID is on' : 'App lock is off'}
+          title={appLockAvailable ? 'Security and app lock' : 'Security'}
+          subtitle={!appLockAvailable ? 'Account and devices' : p.appLock ? 'Face ID is on' : 'App lock is off'}
           chevron
           onPress={() => router.push('/settings/security')}
         />

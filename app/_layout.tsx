@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
@@ -28,7 +28,11 @@ if (!isRunningInExpoGo()) {
 
 // The last data the user saw, kept on the device: a cold start (and a sleeping server) shows it
 // at once while fresh data loads. Signing out clears the cache, and with it this copy.
-const queryPersister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'dhan-query-cache' });
+// In a browser it lasts only as long as the login does, so nothing is left on a shared computer.
+const queryPersister = createAsyncStoragePersister({
+  storage: Platform.OS === 'web' ? window.sessionStorage : AsyncStorage,
+  key: 'dhan-query-cache',
+});
 
 function ThemedStack() {
   const { scheme, colors } = useTheme();
@@ -47,7 +51,7 @@ function ThemedStack() {
           options={{ presentation: 'fullScreenModal', animation: 'fade', gestureEnabled: false }}
         />
       </Stack>
-      <AppUpdateModal />
+      {Platform.OS !== 'web' && <AppUpdateModal />}
     </View>
   );
 }
@@ -73,7 +77,7 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <GestureHandlerRootView style={styles.fill}>
+    <GestureHandlerRootView style={[styles.fill, Platform.OS === 'web' && styles.webFrame]}>
       <SafeAreaProvider>
         <PersistQueryClientProvider
           client={queryClient}
@@ -90,4 +94,8 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({ fill: { flex: 1 } });
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  // The screens are designed for a phone: on a wide browser window keep them at that width
+  webFrame: { width: '100%', maxWidth: 480, alignSelf: 'center' },
+});

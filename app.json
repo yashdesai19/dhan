@@ -90,6 +90,11 @@
       "url": "https://u.expo.dev/0549c1c1-dcb5-4cd7-a767-c547874cc82c",
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
     }
   }
 }

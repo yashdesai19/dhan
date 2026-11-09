@@ -17,7 +17,7 @@ import {
 } from '@/components';
 import { useDevices } from '@/data/queries';
 import { haptics } from '@/hooks/feedback';
-import { usePrefsStore, type LockAfter } from '@/store/prefs';
+import { appLockAvailable, usePrefsStore, type LockAfter } from '@/store/prefs';
 import { useSessionStore } from '@/store/session';
 import { space } from '@/theme';
 
@@ -60,48 +60,50 @@ export function SecurityScreen() {
   return (
     <Screen gap={space[20]}>
       <TopBar title="Security" />
-      <View style={styles.gap10}>
-        <SectionLabel>App lock</SectionLabel>
-        <ListCard>
-          <ToggleRow
-            icon
-            title="App lock"
-            body="Face ID or fingerprint to open DHAN"
-            value={p.appLock}
-            onChange={(v) => {
-              // The session starts locked; turning the lock on shouldn't lock this session.
-              if (v) unlock();
-              p.set('appLock', v);
-            }}
-          />
-          {p.appLock ? (
-            <>
-              <View style={styles.block}>
-                <Text variant="body" weight="medium">
-                  Lock after
-                </Text>
-                <SegmentedControl<LockAfter>
-                  compact
-                  accessibilityLabel="Lock after"
-                  value={p.lockAfter}
-                  onChange={(v) => p.set('lockAfter', v)}
-                  options={[
-                    { value: 'now', label: 'Right away' },
-                    { value: '1m', label: '1 min' },
-                    { value: '5m', label: '5 min' },
-                  ]}
-                />
-              </View>
-            </>
-          ) : null}
-          <ToggleRow
-            title="Hide balances in app switcher"
-            body="Blurs DHAN in recent apps."
-            value={p.hideInSwitcher}
-            onChange={(v) => p.set('hideInSwitcher', v)}
-          />
-        </ListCard>
-      </View>
+      {appLockAvailable ? (
+        <View style={styles.gap10}>
+          <SectionLabel>App lock</SectionLabel>
+          <ListCard>
+            <ToggleRow
+              icon
+              title="App lock"
+              body="Face ID or fingerprint to open DHAN"
+              value={p.appLock}
+              onChange={(v) => {
+                // The session starts locked; turning the lock on shouldn't lock this session.
+                if (v) unlock();
+                p.set('appLock', v);
+              }}
+            />
+            {p.appLock ? (
+              <>
+                <View style={styles.block}>
+                  <Text variant="body" weight="medium">
+                    Lock after
+                  </Text>
+                  <SegmentedControl<LockAfter>
+                    compact
+                    accessibilityLabel="Lock after"
+                    value={p.lockAfter}
+                    onChange={(v) => p.set('lockAfter', v)}
+                    options={[
+                      { value: 'now', label: 'Right away' },
+                      { value: '1m', label: '1 min' },
+                      { value: '5m', label: '5 min' },
+                    ]}
+                  />
+                </View>
+              </>
+            ) : null}
+            <ToggleRow
+              title="Hide balances in app switcher"
+              body="Blurs DHAN in recent apps."
+              value={p.hideInSwitcher}
+              onChange={(v) => p.set('hideInSwitcher', v)}
+            />
+          </ListCard>
+        </View>
+      ) : null}
       <View style={styles.gap10}>
         <SectionLabel>Account</SectionLabel>
         <ListCard>

@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { hasBrowserSession } from '@/data/api/tokens';
 
 /** Mock session (spec §12). No auth service: a flag decides which stack opens. */
 interface SessionStore {
@@ -35,7 +38,11 @@ export const useSessionStore = create<SessionStore>()(
       name: 'dhan.session',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ onboarded: s.onboarded, signedIn: s.signedIn }),
-      onRehydrateStorage: () => (state) => state?.setHydrated(),
+      onRehydrateStorage: () => (state) => {
+        // A browser forgets its login with the tab; don't open the app as if still signed in
+        if (Platform.OS === 'web' && state?.signedIn && !hasBrowserSession()) state.signOut();
+        state?.setHydrated();
+      },
     },
   ),
 );

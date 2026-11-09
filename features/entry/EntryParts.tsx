@@ -124,7 +124,8 @@ export function useValidDraftIds(
     const from = fix.fromId ?? draft.fromId;
     if (!known(draft.toId) || draft.toId === from) {
       const other = live.find((a) => a.id !== from) ?? live[0]!;
-      fix.toId = other.id;
+      // With a single account there is no other one: writing it again would loop this effect
+      if (other.id !== draft.toId) fix.toId = other.id;
     }
     const isKind = (id: string, kind: string) => categories.some((c) => c.id === id && c.kind === kind);
     const firstOf = (kind: 'expense' | 'income') =>
