@@ -67,3 +67,5 @@ jest.mock('expo-router', () => ({
     Screen: () => null,
   }),
 }));
+jest.mock('expo-print', () => ({ printToFileAsync: jest.fn() }));
+jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));

@@ -251,6 +251,12 @@ export function ReportsScreen() {
               />
             </ListCard>
           ) : null}
+          <Button
+            label="Export PDF or Excel"
+            kind="secondary"
+            icon="download"
+            onPress={() => router.push('/export')}
+          />
           <SectionHeader
             title="Account balances"
             action="Accounts"
