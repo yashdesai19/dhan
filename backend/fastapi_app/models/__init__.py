@@ -3,6 +3,7 @@
 from fastapi_app.db.base import Base
 from fastapi_app.models.account import Account
 from fastapi_app.models.ai import AIConversation, AIMessage
+from fastapi_app.models.book import Book
 from fastapi_app.models.budget import Budget
 from fastapi_app.models.category import Category
 from fastapi_app.models.goal import Goal, GoalContribution
@@ -20,6 +21,7 @@ __all__ = [
     "User",
     "RefreshToken",
     "Account",
+    "Book",
     "Category",
     "Transaction",
     "Budget",

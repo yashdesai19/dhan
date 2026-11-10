@@ -21,6 +21,7 @@ import type {
   Transaction,
   User,
 } from '@/types/domain';
+import { BUSINESS_CATEGORIES, PERSONAL_BOOK_ID } from '@/utils/books';
 import { inr } from '@/utils/format';
 import { IST_OFFSET_MINUTES } from './config';
 
@@ -45,6 +46,11 @@ export interface WireAccount {
   include_in_total: boolean;
   institution_name?: string;
   account_number_mask?: string;
+  book_id?: string | null;
+}
+export interface WireBook {
+  id: string;
+  name: string;
 }
 export interface WireCategory {
   id: string;
@@ -178,7 +184,9 @@ export const EXPENSE_CHIP_ORDER = ['Food', 'Transport', 'Shopping', 'Bills', 'He
 export const INCOME_CHIP_ORDER = ['Salary', 'Freelancing', 'Business', 'Gift', 'Cashback', 'Interest', 'Other'];
 
 export const categoryKey = (name: string, kind: string) => `${kind}:${name.trim().toLowerCase()}`;
-const STANDARD_BY_KEY = new Map(STANDARD_CATEGORIES.map((c) => [categoryKey(c.name, c.kind), c]));
+const STANDARD_BY_KEY = new Map<string, StandardCategory>(
+  [...STANDARD_CATEGORIES, ...BUSINESS_CATEGORIES].map((c) => [categoryKey(c.name, c.kind), c]),
+);
 
 // ---------------------------------------------------------------- small helpers
 
@@ -273,6 +281,7 @@ export function toAccount(a: WireAccount, today: string): Account {
     dueDate: a.due_date ? nextDueDate(a.due_date, today) : undefined,
     includeInTotal: a.include_in_total,
     archived: a.archived,
+    bookId: a.book_id ?? undefined,
   };
 }
 
@@ -286,6 +295,7 @@ export function fromAccount(a: Omit<Account, 'id' | 'archived'>) {
     include_in_total: a.includeInTotal,
     institution_name: a.subtitle ?? '',
     account_number_mask: a.last4 ?? '',
+    book_id: a.bookId && a.bookId !== PERSONAL_BOOK_ID ? a.bookId : null,
   };
 }
 

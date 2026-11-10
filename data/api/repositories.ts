@@ -5,6 +5,7 @@ import type {
   Account,
   AppNotification,
   Asset,
+  Book,
   Budget,
   Category,
   CategoryBudget,
@@ -23,6 +24,7 @@ import type {
   User,
 } from '@/types/domain';
 import { aiResponses as SUGGESTED_QUESTIONS } from '@/mock/seed';
+import { BUSINESS_CATEGORIES, PERSONAL_BOOK_ID, scopeToBook } from '@/utils/books';
 import { shiftMonth } from '@/utils/dates';
 import { inr } from '@/utils/format';
 import { netWorth } from '@/utils/netWorth';
@@ -51,6 +53,7 @@ import {
   toUser,
   type WireAccount,
   type WireAsset,
+  type WireBook,
   type WireBudget,
   type WireCategory,
   type WireGoal,
@@ -257,12 +260,15 @@ const daysUntil = (date: string, today: string) =>
 async function buildNotifications(): Promise<AppNotification[]> {
   const today = istToday();
   const month = today.slice(0, 7);
-  const [recurring, budgets, transactions, categories] = await Promise.all([
+  const [recurring, budgets, allTransactions, categories, accounts] = await Promise.all([
     api.get<WireRecurring[]>('/recurring'),
     fetchBudgets(),
     fetchTransactions(),
     fetchCategories(),
+    fetchAccounts(),
   ]);
+  // Budgets cover personal money, so business spending must not trip their alerts
+  const { transactions } = scopeToBook(accounts, allTransactions, PERSONAL_BOOK_ID);
   const out: AppNotification[] = [];
   for (const r of recurring.filter((x) => x.status === 'active' && x.kind !== 'income')) {
     const days = daysUntil(r.next_due_date, today);
@@ -354,6 +360,8 @@ async function fetchChipOrder(): Promise<{ expense: string[]; income: string[] }
 export const readRepo = {
   user: async (): Promise<User> => toUser(await api.get<WireUser>('/auth/me')),
   accounts: fetchAccounts,
+  books: async (): Promise<Book[]> =>
+    (await api.get<WireBook[]>('/books')).map((b) => ({ id: b.id, name: b.name, kind: 'business' })),
   categories: fetchCategories,
   transactions: fetchTransactions,
   budgets: fetchBudgets,
@@ -511,6 +519,25 @@ export const transactionsRepo = {
 // ---------------------------------------------------------------- accounts
 
 export type AccountInput = Omit<Account, 'id' | 'archived'> & { id?: ID };
+
+export const booksRepo = {
+  /** Categories first: if a step fails, retrying is harmless and no book is left without them. */
+  create: async (name: string): Promise<Book> => {
+    if (!name.trim()) throw new ApiError('Give the book a name.', 'invalid');
+    await Promise.all(
+      BUSINESS_CATEGORIES.map(async (c) => {
+        try {
+          await api.post('/categories', { name: c.name, category_type: c.kind, icon: c.icon });
+        } catch (e) {
+          // Already there from an earlier book
+          if (!(e instanceof ApiError) || e.code !== 'invalid') throw e;
+        }
+      }),
+    );
+    const wire = await api.post<WireBook>('/books', { name: name.trim() });
+    return { id: wire.id, name: wire.name, kind: 'business' };
+  },
+};
 
 export const accountsRepo = {
   upsert: async (a: AccountInput): Promise<Account> => {

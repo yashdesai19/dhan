@@ -101,7 +101,7 @@ export function AddSplitScreen() {
   const c = useColors();
   const params = useLocalSearchParams<{ amount: string; title: string; groupId: string }>();
   const s = useSplits();
-  const { accounts } = useMoneyData();
+  const { accounts } = useMoneyData('all');
   const draft = useSplitDraftStore((x) => x.draft);
   const patch = useSplitDraftStore((x) => x.patch);
   const reset = useSplitDraftStore((x) => x.reset);

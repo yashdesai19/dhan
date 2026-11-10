@@ -111,6 +111,7 @@ export function useValidDraftIds(
   accounts: readonly Account[],
   categories: readonly Category[],
   chipOrder?: { expense: string[]; income: string[] },
+  onlyChips = false,
 ) {
   const draft = useEntryDraftStore((s) => s.draft);
   const patch = useEntryDraftStore((s) => s.patch);
@@ -130,8 +131,17 @@ export function useValidDraftIds(
     const isKind = (id: string, kind: string) => categories.some((c) => c.id === id && c.kind === kind);
     const firstOf = (kind: 'expense' | 'income') =>
       chipOrder?.[kind][0] ?? categories.find((c) => c.kind === kind)?.id;
-    if (categories.length && !isKind(draft.categoryId, 'expense')) fix.categoryId = firstOf('expense');
-    if (categories.length && !isKind(draft.incomeSourceId, 'income')) fix.incomeSourceId = firstOf('income');
+    if (
+      categories.length &&
+      (!isKind(draft.categoryId, 'expense') || (onlyChips && !chipOrder?.expense.includes(draft.categoryId)))
+    )
+      fix.categoryId = firstOf('expense');
+    if (
+      categories.length &&
+      (!isKind(draft.incomeSourceId, 'income') ||
+        (onlyChips && !chipOrder?.income.includes(draft.incomeSourceId)))
+    )
+      fix.incomeSourceId = firstOf('income');
     if (Object.values(fix).some((v) => v !== undefined)) patch(fix);
-  }, [accounts, categories, chipOrder, draft, patch]);
+  }, [accounts, categories, chipOrder, onlyChips, draft, patch]);
 }

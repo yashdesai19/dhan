@@ -6,7 +6,9 @@ import { today } from '@/mock/clock';
 import type {
   Account,
   Asset,
+  Book,
   Budget,
+  Category,
   Insights,
   CategoryBudget,
   Goal,
@@ -23,6 +25,7 @@ import type {
   Transaction,
   User,
 } from '@/types/domain';
+import { BUSINESS_CATEGORIES } from '@/utils/books';
 import { applyEffects, balanceEffects } from '@/utils/summary';
 import { MockError, simulate } from './simulate';
 
@@ -35,6 +38,7 @@ const read = <K extends keyof DbState>(key: K) => simulate(() => db.get()[key]);
 export const readRepo = {
   user: () => read('user'),
   accounts: () => read('accounts'),
+  books: () => read('books'),
   categories: () => read('categories'),
   transactions: () => read('transactions'),
   budgets: () => read('budgets'),
@@ -197,6 +201,43 @@ export const accountsRepo = {
         accounts: s.accounts.map((a) => (a.id === id ? { ...a, archived: true, includeInTotal: false } : a)),
       }));
       return id;
+    }),
+};
+
+// ---------------------------------------------------------------- books
+
+export const booksRepo = {
+  /** Creates a business book, its cash account and (once) the business categories. */
+  create: (name: string) =>
+    simulate(() => {
+      const trimmed = name.trim();
+      if (!trimmed) throw new MockError('Give the book a name.', 'invalid');
+      if (db.get().books.some((b) => b.name.toLowerCase() === trimmed.toLowerCase())) {
+        throw new MockError(`A book named '${trimmed}' already exists.`, 'invalid');
+      }
+      const book: Book = { id: db.id('b'), name: trimmed, kind: 'business' };
+      const cash: Account = {
+        id: db.id('a'),
+        name: `${trimmed} Cash`,
+        type: 'cash',
+        subtitle: 'In hand',
+        balance: 0,
+        includeInTotal: true,
+        archived: false,
+        bookId: book.id,
+      };
+      db.update((s) => {
+        const missing = BUSINESS_CATEGORIES.filter(
+          (b) => !s.categories.some((c) => c.kind === b.kind && c.name === b.name),
+        ).map((b): Category => ({ ...b, id: db.id('c') }));
+        return {
+          ...s,
+          books: [...s.books, book],
+          accounts: [...s.accounts, cash],
+          categories: [...s.categories, ...missing],
+        };
+      });
+      return book;
     }),
 };
 

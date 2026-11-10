@@ -60,7 +60,7 @@ export function TransactionDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { today, month } = useToday();
-  const money = useMoneyData();
+  const money = useMoneyData('all');
   const budgets = useBudgets();
   const t = money.transactions.find((x) => x.id === id);
 

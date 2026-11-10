@@ -57,7 +57,7 @@ export function MoreScreen() {
   const c = useColors();
   const router = useRouter();
   const user = useUser().data;
-  const money = useMoneyData();
+  const money = useMoneyData('all');
   const splits = useSplits();
   const unread = (useNotifications().data ?? []).filter((n) => n.unread).length;
   const accounts = useMemo(() => money.accounts.filter((a) => !a.archived).length, [money.accounts]);
@@ -112,6 +112,12 @@ export function MoreScreen() {
                 {String(accounts)}
               </Text>
             ),
+          },
+          {
+            icon: 'briefcase',
+            title: 'Business books',
+            subtitle: 'Keep business and personal apart',
+            href: '/books',
           },
           { icon: 'tag', title: 'Categories', href: '/categories' },
           {

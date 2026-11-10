@@ -70,6 +70,7 @@ class AccountCreate(AccountBase):
 
     institution_name: str = Field(default="", max_length=100)
     account_number_mask: str = Field(default="", max_length=20)
+    book_id: uuid.UUID | None = None
 
 
 class AccountUpdate(BaseModel):
@@ -85,6 +86,8 @@ class AccountUpdate(BaseModel):
     include_in_total: bool | None = None
     institution_name: str | None = None
     account_number_mask: str | None = None
+    # Sending null moves the account to the Personal book; leaving it out changes nothing
+    book_id: uuid.UUID | None = None
 
     @field_validator("name")
     @classmethod
@@ -124,6 +127,7 @@ class AccountResponse(BaseModel):
     due_date: int | None = None
     archived: bool
     include_in_total: bool = True
+    book_id: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime
 

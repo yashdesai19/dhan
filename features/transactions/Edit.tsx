@@ -30,7 +30,7 @@ export function EditTransactionScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { today } = useToday();
-  const money = useMoneyData();
+  const money = useMoneyData('all');
   const chipOrder = useChipOrder().data;
   const update = useUpdateTransaction();
   const show = useToastStore((s) => s.show);

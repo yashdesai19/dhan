@@ -5,6 +5,7 @@ import type {
   Account,
   AppNotification,
   Asset,
+  Book,
   Budget,
   Category,
   Device,
@@ -24,6 +25,8 @@ import type {
 export interface DbState {
   user: User;
   accounts: Account[];
+  /** Business books only; Personal is implied. */
+  books: Book[];
   categories: Category[];
   transactions: Transaction[];
   budgets: Budget[];
@@ -50,6 +53,7 @@ function fromSeed(): DbState {
   return clone({
     user: seed.user,
     accounts: seed.accounts,
+    books: [],
     categories: seed.categories,
     transactions: seed.transactions,
     budgets: seed.budgets,

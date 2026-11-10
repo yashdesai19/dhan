@@ -18,10 +18,11 @@ import {
   Text,
   Touchable,
 } from '@/components';
-import { useBudgets, useHistory, useRecurring, useReplaceBudget } from '@/data/queries';
-import { useMoneyData, useToday } from '@/features/shared/hooks';
+import { useBudgets, useRecurring, useReplaceBudget } from '@/data/queries';
+import { useActiveBook, useMoneyData, useScopedHistory, useToday } from '@/features/shared/hooks';
 import { useToastStore } from '@/store/ui';
 import { iconSize, space } from '@/theme';
+import { PERSONAL_BOOK_ID } from '@/utils/books';
 import { budgetStatus, suggestBudget, type CategoryBudgetStatus } from '@/utils/budget';
 import { dayMonth, monthName, monthOf, shiftMonth } from '@/utils/dates';
 import { inr, plural } from '@/utils/format';
@@ -101,9 +102,10 @@ export function BudgetScreen() {
   const router = useRouter();
   const { today, month: current } = useToday();
   const [month, setMonth] = useState(current);
-  const money = useMoneyData();
+  const money = useMoneyData('personal');
+  const { id: book } = useActiveBook();
   const budgets = useBudgets();
-  const history = useHistory();
+  const history = useScopedHistory('personal');
   const recurring = useRecurring();
   const replace = useReplaceBudget(month);
   const show = useToastStore((s) => s.show);
@@ -240,6 +242,11 @@ export function BudgetScreen() {
       refresh={{ refreshing: money.refreshing, onRefresh: () => void money.refetch() }}
     >
       {header}
+      {book === PERSONAL_BOOK_ID ? null : (
+        <Banner icon="info" tone="neutral">
+          Budgets cover your Personal book. Business spending isn’t counted here.
+        </Banner>
+      )}
       <View style={styles.gap12}>
         <View style={styles.leftRow}>
           <Money amount={Math.max(0, status.left)} size="hero" />

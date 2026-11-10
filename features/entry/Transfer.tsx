@@ -75,7 +75,8 @@ function AccountCard({
 export function TransferScreen() {
   const c = useColors();
   const { today } = useToday();
-  const { accounts, categories, loading } = useMoneyData();
+  // Every book's accounts: this is how money moves between a business and personal
+  const { accounts, categories, loading } = useMoneyData('all');
   useValidDraftIds(accounts, categories);
   const draft = useEntryDraftStore((s) => s.draft);
   const patch = useEntryDraftStore((s) => s.patch);

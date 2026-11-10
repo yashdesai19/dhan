@@ -17,8 +17,8 @@ import {
   TopBar,
   TransactionRow,
 } from '@/components';
-import { useBudgets, useHistory } from '@/data/queries';
-import { useMoneyData, useToday } from '@/features/shared/hooks';
+import { useBudgets } from '@/data/queries';
+import { useMoneyData, useScopedHistory, useToday } from '@/features/shared/hooks';
 import { space } from '@/theme';
 import { budgetStatus, categoryHistory, projectedSpend } from '@/utils/budget';
 import { daysInMonth, dayMonth, monthName, parts, weekdayDayMonth } from '@/utils/dates';
@@ -30,9 +30,9 @@ export function CategoryBudgetScreen() {
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category: string }>();
   const { today, month } = useToday();
-  const money = useMoneyData();
+  const money = useMoneyData('personal');
   const budgets = useBudgets();
-  const history = useHistory();
+  const history = useScopedHistory('personal');
   const cat = money.categories.find((c) => c.id === category);
 
   const view = useMemo(() => {

@@ -15,8 +15,8 @@ import {
   Toggle,
   useSheet,
 } from '@/components';
-import { useBudgets, useHistory, useRemoveCategoryBudget, useSetCategoryBudget } from '@/data/queries';
-import { useMoneyData, useToday } from '@/features/shared/hooks';
+import { useBudgets, useRemoveCategoryBudget, useSetCategoryBudget } from '@/data/queries';
+import { useMoneyData, useScopedHistory, useToday } from '@/features/shared/hooks';
 import { useToastStore } from '@/store/ui';
 import { space } from '@/theme';
 import { threeMonthAverage } from '@/utils/budget';
@@ -31,9 +31,9 @@ function Body({ categoryId, setCategoryId }: { categoryId: string; setCategoryId
   const { month: current } = useToday();
   const month = params.month ?? current;
   const isNew = params.category === 'new';
-  const money = useMoneyData();
+  const money = useMoneyData('personal');
   const budgets = useBudgets();
-  const history = useHistory();
+  const history = useScopedHistory('personal');
   const setBudget = useSetCategoryBudget(month);
   const remove = useRemoveCategoryBudget(month);
   const show = useToastStore((s) => s.show);
@@ -163,7 +163,7 @@ function Body({ categoryId, setCategoryId }: { categoryId: string; setCategoryId
 
 export function EditBudgetSheet() {
   const { category } = useLocalSearchParams<{ category: string }>();
-  const { categories } = useMoneyData();
+  const { categories } = useMoneyData('personal');
   const [chosenId, setCategoryId] = useState(category === 'new' || !category ? '' : category);
   // A new budget starts on Health, found by name since ids differ between the demo and the server
   const categoryId =

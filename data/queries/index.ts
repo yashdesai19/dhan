@@ -6,6 +6,7 @@ import {
   accountsRepo,
   aiRepo,
   authRepo,
+  booksRepo,
   budgetRepo,
   goalsRepo,
   netWorthRepo,
@@ -56,6 +57,7 @@ export function bindAppFocus(): () => void {
 
 export const useUser = () => useQuery({ queryKey: qk.user, queryFn: readRepo.user });
 export const useAccounts = () => useQuery({ queryKey: qk.accounts, queryFn: readRepo.accounts });
+export const useBooks = () => useQuery({ queryKey: qk.books, queryFn: readRepo.books });
 export const useCategories = () => useQuery({ queryKey: qk.categories, queryFn: readRepo.categories });
 export const useTransactions = () => useQuery({ queryKey: qk.transactions, queryFn: readRepo.transactions });
 export const useBudgets = () => useQuery({ queryKey: qk.budgets, queryFn: readRepo.budgets });
@@ -136,6 +138,14 @@ export function useUpsertAccount() {
 export function useArchiveAccount() {
   const inv = useInvalidate();
   return useMutation({ mutationFn: accountsRepo.archive, onSuccess: () => inv('accounts') });
+}
+
+export function useCreateBook() {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: booksRepo.create,
+    onSuccess: () => inv('books', 'accounts', 'categories'),
+  });
 }
 
 export function useSetCategoryBudget(month: MonthKey) {

@@ -17,11 +17,12 @@ import {
 } from '@/components';
 import { useAddExpense, useAddIncome, useChipOrder } from '@/data/queries';
 import { undo } from '@/data/queries/actions';
-import { useMoneyData, useToday } from '@/features/shared/hooks';
+import { useActiveBook, useMoneyData, useToday } from '@/features/shared/hooks';
 import { useReturnTo } from '@/features/shared/nav';
 import { amountValue, pressKey, useEntryDraftStore } from '@/store/drafts';
 import { useHighlightStore, useToastStore } from '@/store/ui';
 import { layout, space, useColors } from '@/theme';
+import { businessChips } from '@/utils/books';
 import { addDays } from '@/utils/dates';
 import { formatAmountInput, inr } from '@/utils/format';
 import { dateLabel, EntryHeader, EntryPill, nextAccount, useValidDraftIds } from './EntryParts';
@@ -29,8 +30,10 @@ import { dateLabel, EntryHeader, EntryPill, nextAccount, useValidDraftIds } from
 function useEntry(kind: 'expense' | 'income') {
   const { today } = useToday();
   const { accounts, categories, loading } = useMoneyData();
-  const chipOrder = useChipOrder().data;
-  useValidDraftIds(accounts, categories, chipOrder);
+  const { isBusiness } = useActiveBook();
+  const standardChips = useChipOrder().data;
+  const chipOrder = isBusiness ? businessChips(categories) : standardChips;
+  useValidDraftIds(accounts, categories, chipOrder, isBusiness);
   const draft = useEntryDraftStore((s) => s.draft);
   const patch = useEntryDraftStore((s) => s.patch);
   const reset = useEntryDraftStore((s) => s.reset);
@@ -267,7 +270,12 @@ export function AddIncomeScreen() {
           value={custom}
           onChangeText={(v) => {
             setCustom(v);
-            const other = e.categories.find((c) => c.kind === 'income' && /^other/i.test(c.name));
+            const isOther = (c: { kind: string; name: string }) =>
+              c.kind === 'income' && /^other/i.test(c.name);
+            // The book's own "Other" chip first; a business book only keeps ids from its chips
+            const other =
+              e.categories.find((c) => isOther(c) && e.options.some((o) => o.value === c.id)) ??
+              e.categories.find(isOther);
             e.patch({ incomeSourceId: other?.id ?? 'other-in', note: v });
           }}
           placeholder="For example, Rent from tenant"

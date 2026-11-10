@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Banner,
   Button,
+  ChipGroup,
   ListCard,
   ListRow,
   Screen,
@@ -15,10 +16,11 @@ import {
   TopBar,
 } from '@/components';
 import { useUpsertAccount } from '@/data/queries';
-import { useMoneyData } from '@/features/shared/hooks';
+import { useActiveBook, useMoneyData } from '@/features/shared/hooks';
 import { useToastStore } from '@/store/ui';
 import { space } from '@/theme';
 import type { AccountType } from '@/types/domain';
+import { ALL_BOOKS_ID, PERSONAL_BOOK_ID } from '@/utils/books';
 import { groupIN } from '@/utils/format';
 import { AccountTypeGrid } from './AccountTypeGrid';
 
@@ -34,10 +36,14 @@ const SUBTITLE: Record<AccountType, string> = {
 export function EditAccountScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { accounts } = useMoneyData();
+  const { accounts } = useMoneyData('all');
+  const active = useActiveBook();
   const upsert = useUpsertAccount();
   const show = useToastStore((s) => s.show);
   const existing = accounts.find((a) => a.id === id);
+  const [bookId, setBookId] = useState(
+    existing?.bookId ?? (active.id === ALL_BOOKS_ID ? PERSONAL_BOOK_ID : active.id),
+  );
   const [type, setType] = useState<AccountType>(existing?.type ?? 'bank');
   const [name, setName] = useState(existing?.name ?? '');
   const [balance, setBalance] = useState(existing ? `₹${groupIN(existing.balance)}` : '');
@@ -60,6 +66,7 @@ export function EditAccountScreen() {
         balance: type === 'credit' ? -Math.abs(value) : value,
         last4: last4 || undefined,
         includeInTotal: include,
+        bookId: bookId === PERSONAL_BOOK_ID ? undefined : bookId,
       },
       {
         onSuccess: (a) => {
@@ -88,6 +95,16 @@ export function EditAccountScreen() {
       }
     >
       <TopBar variant="modal" title={existing ? 'Edit account' : 'New account'} />
+      {active.hasBusiness ? (
+        <View style={styles.gap10}>
+          <SectionLabel>Book</SectionLabel>
+          <ChipGroup
+            options={active.books.map((b) => ({ value: b.id, label: b.name }))}
+            selected={[bookId]}
+            onChange={([v]) => v && setBookId(v)}
+          />
+        </View>
+      ) : null}
       <View style={styles.gap10}>
         <SectionLabel>Type</SectionLabel>
         <AccountTypeGrid value={type} onChange={setType} />

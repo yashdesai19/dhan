@@ -32,10 +32,12 @@ import {
   useSettlements,
   useUser,
 } from '@/data/queries';
-import { useMoneyData, useToday } from '@/features/shared/hooks';
+import { BookSwitcher } from '@/features/shared/BookSwitcher';
+import { useActiveBook, useMoneyData, useToday } from '@/features/shared/hooks';
 import { usePrefsStore } from '@/store/prefs';
 import { useHighlightStore } from '@/store/ui';
 import { iconSize, radius, size, space, useColors, type ColorName } from '@/theme';
+import { PERSONAL_BOOK_ID } from '@/utils/books';
 import { budgetStatus } from '@/utils/budget';
 import { dayMonth, monthName, monthOf } from '@/utils/dates';
 import { describeTransaction } from '@/utils/describe';
@@ -112,6 +114,7 @@ export function HomeScreen() {
   const router = useRouter();
   const { today, month } = useToday();
   const money = useMoneyData();
+  const { id: bookId, isBusiness } = useActiveBook();
   const budgets = useBudgets();
   const groupExpenses = useGroupExpenses();
   const settlements = useSettlements();
@@ -210,6 +213,8 @@ export function HomeScreen() {
         />
       </View>
 
+      <BookSwitcher />
+
       <View style={styles.gap6}>
         <Text variant="small" color="muted">
           {`Total balance · ${plural(balance.count, 'account', 'accounts')}`}
@@ -240,10 +245,10 @@ export function HomeScreen() {
 
       <View style={[styles.kpis, { backgroundColor: c.surface, borderColor: c.line }]}>
         {[
-          { label: 'Income', value: inr(totals.income), color: 'ink' as ColorName },
-          { label: 'Spent', value: inr(totals.spent), color: 'ink' as ColorName },
+          { label: isBusiness ? 'Sales' : 'Income', value: inr(totals.income), color: 'ink' as ColorName },
+          { label: isBusiness ? 'Expenses' : 'Spent', value: inr(totals.spent), color: 'ink' as ColorName },
           {
-            label: 'Net flow',
+            label: isBusiness ? 'Profit' : 'Net flow',
             value: inr(totals.net, 'plus'),
             color: (totals.net >= 0 ? 'income' : 'expense') as ColorName,
           },
@@ -298,7 +303,7 @@ export function HomeScreen() {
             No spending yet this month.
           </Text>
         )}
-        {budget ? (
+        {budget && bookId === PERSONAL_BOOK_ID ? (
           <>
             <Divider />
             <Touchable
@@ -324,39 +329,41 @@ export function HomeScreen() {
         ) : null}
       </Card>
 
-      <View style={styles.tiles}>
-        {[
-          {
-            label: 'You owe',
-            value: pos.owe,
-            color: 'expense' as ColorName,
-            sub: owe.length ? `to ${joinNames(owe)}` : 'All square',
-          },
-          {
-            label: 'You’re owed',
-            value: pos.owed,
-            color: 'income' as ColorName,
-            sub: owed.length ? `from ${joinNames(owed)}` : 'Nothing pending',
-          },
-        ].map((t) => (
-          <Touchable
-            key={t.label}
-            onPress={() => router.push('/splits')}
-            accessibilityLabel={`${t.label} ${inr(t.value)} ${t.sub}`}
-            style={[styles.tile, { backgroundColor: c.surface, borderColor: c.line }]}
-          >
-            <Text variant="meta" color="muted">
-              {t.label}
-            </Text>
-            <Text variant="heading" tabular color={t.color}>
-              {inr(t.value)}
-            </Text>
-            <Text variant="caption" color="muted" numberOfLines={1}>
-              {t.sub}
-            </Text>
-          </Touchable>
-        ))}
-      </View>
+      {isBusiness ? null : (
+        <View style={styles.tiles}>
+          {[
+            {
+              label: 'You owe',
+              value: pos.owe,
+              color: 'expense' as ColorName,
+              sub: owe.length ? `to ${joinNames(owe)}` : 'All square',
+            },
+            {
+              label: 'You’re owed',
+              value: pos.owed,
+              color: 'income' as ColorName,
+              sub: owed.length ? `from ${joinNames(owed)}` : 'Nothing pending',
+            },
+          ].map((t) => (
+            <Touchable
+              key={t.label}
+              onPress={() => router.push('/splits')}
+              accessibilityLabel={`${t.label} ${inr(t.value)} ${t.sub}`}
+              style={[styles.tile, { backgroundColor: c.surface, borderColor: c.line }]}
+            >
+              <Text variant="meta" color="muted">
+                {t.label}
+              </Text>
+              <Text variant="heading" tabular color={t.color}>
+                {inr(t.value)}
+              </Text>
+              <Text variant="caption" color="muted" numberOfLines={1}>
+                {t.sub}
+              </Text>
+            </Touchable>
+          ))}
+        </View>
+      )}
 
       <View style={styles.gap4}>
         <SectionHeader title="Recent" action="See all" onAction={() => router.navigate('/activity')} />
