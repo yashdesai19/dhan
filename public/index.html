@@ -22,6 +22,19 @@
         overflow: hidden;
         background-color: #0b5d46;
       }
+      /* Fields draw their own focus border; the browser's outline doubled it */
+      input,
+      textarea {
+        outline: none;
+      }
+      /* Keep autofilled fields in the app's colours instead of the browser's yellow or white */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus {
+        -webkit-text-fill-color: inherit;
+        caret-color: inherit;
+        transition: background-color 600000s 0s, color 600000s 0s;
+      }
       #root {
         display: flex;
         height: 100%;
