@@ -3,7 +3,7 @@
     "name": "DHAN",
     "slug": "dhan",
     "scheme": "dhan",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -85,7 +85,7 @@
     },
     "owner": "bansiii",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
       "url": "https://u.expo.dev/0549c1c1-dcb5-4cd7-a767-c547874cc82c",

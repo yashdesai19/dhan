@@ -1,0 +1,55 @@
+# Every push to main: run the checks, then ship.
+# - Native code unchanged (a build with this fingerprint exists): publish an over-the-air update,
+#   which reaches installed apps through the in-app update popup.
+# - Native code changed (no build with this fingerprint): build a new app bundle and submit it to
+#   Google Play, which updates installed apps by itself.
+name: Deploy to production
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  check:
+    name: Typecheck, lint, rules and tests
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: Run checks
+        run: npm run check
+
+  fingerprint:
+    needs: [check]
+    type: fingerprint
+    environment: production
+
+  get_android_build:
+    needs: [fingerprint]
+    type: get-build
+    params:
+      platform: android
+      profile: production
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+
+  build_android:
+    needs: [get_android_build]
+    if: ${{ !needs.get_android_build.outputs.build_id }}
+    type: build
+    params:
+      platform: android
+      profile: production
+
+  submit_android:
+    needs: [build_android]
+    type: submit
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      profile: production
+
+  publish_android_update:
+    needs: [get_android_build]
+    if: ${{ needs.get_android_build.outputs.build_id }}
+    type: update
+    params:
+      channel: production
+      platform: android

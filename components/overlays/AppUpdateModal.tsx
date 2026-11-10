@@ -194,8 +194,13 @@ export function AppUpdateModal() {
       visible={visible}
       onRequestClose={handleDismiss}
     >
-      <View style={styles.backdrop}>
-        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.btnBorder }]}>
+      <View style={[styles.backdrop, { backgroundColor: c.scrim }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: c.surface, borderColor: c.btnBorder, shadowColor: c.shadowBase },
+          ]}
+        >
           <View style={[styles.iconCircle, { backgroundColor: c.primarySoft }]}>
             <Icon name="download" size={28} color="primary" />
           </View>
@@ -269,7 +274,6 @@ export function AppUpdateModal() {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: space[20],
@@ -281,7 +285,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: space[24],
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
