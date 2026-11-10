@@ -15,31 +15,14 @@
     },
     "production": {
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       },
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_DHAN_API_URL": "https://dhan-api-jqfp.onrender.com"
-      },
-      "channel": "production"
-    },
-    "apk": {
-      "extends": "production",
-      "android": {
-        "buildType": "apk"
-      },
-      "env": {
         "EXPO_PUBLIC_DHAN_API_URL": "https://dhan-api-jqfp.onrender.com",
         "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "android": {
-        "track": "internal",
-        "releaseStatus": "draft"
-      }
+      },
+      "channel": "production"
     }
   }
 }

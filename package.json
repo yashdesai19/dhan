@@ -14,7 +14,8 @@
     "test": "jest --forceExit",
     "test:logic": "node offline/run-logic-tests.mjs",
     "check": "npm run typecheck && npm run lint && npm run rules && npm test",
-    "rules": "node offline/check-rules.mjs"
+    "rules": "node offline/check-rules.mjs",
+    "release:apk": "node scripts/release-apk.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.18",

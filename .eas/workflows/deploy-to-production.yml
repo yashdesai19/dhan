@@ -1,8 +1,9 @@
 # Every push to main: run the checks, then ship.
-# - Native code unchanged (a build with this fingerprint exists): publish an over-the-air update,
-#   which reaches installed apps through the in-app update popup.
-# - Native code changed (no build with this fingerprint): build a new app bundle and submit it to
-#   Google Play, which updates installed apps by itself.
+# - Native code unchanged (a build with this fingerprint exists): publish an over-the-air update.
+#   Installed apps pick it up from the in-app update popup.
+# - Native code changed (no build with this fingerprint): check that app.json "version" was raised,
+#   then build a new APK. Publish it on the website with `npm run release:apk -- "notes"`; installed
+#   apps then offer it from the same popup.
 name: Deploy to production
 
 on:
@@ -31,19 +32,20 @@ jobs:
       profile: production
       fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
 
-  build_android:
+  check_version:
+    name: Native change needs a higher version
     needs: [get_android_build]
     if: ${{ !needs.get_android_build.outputs.build_id }}
+    steps:
+      - uses: eas/checkout
+      - name: Compare app.json version with the published APK
+        run: node scripts/check-release-version.mjs
+
+  build_android:
+    needs: [check_version]
     type: build
     params:
       platform: android
-      profile: production
-
-  submit_android:
-    needs: [build_android]
-    type: submit
-    params:
-      build_id: ${{ needs.build_android.outputs.build_id }}
       profile: production
 
   publish_android_update:
