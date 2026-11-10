@@ -82,7 +82,9 @@ export function AppUpdateModal() {
         const currentVersion = Constants.expoConfig?.version ?? '1.0.0';
 
         if (active && data.latest_version && isNewerVersion(data.latest_version, currentVersion)) {
-          setUpdateInfo(data);
+          // Installs older than min_version can no longer work with the server: no "Later"
+          const tooOld = !!data.min_version && isNewerVersion(data.min_version, currentVersion);
+          setUpdateInfo({ ...data, force_update: data.force_update || tooOld });
           setVisible(true);
         }
       } catch {

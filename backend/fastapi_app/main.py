@@ -140,17 +140,26 @@ async def health_check() -> HealthResponse:
 @app.get("/app-version", tags=["App Version"])
 @app.get("/api/v1/app-version", tags=["App Version"])
 async def get_app_version() -> dict:
-    """Return latest published app version, download link, and update requirements."""
-    import os
-    # Raise this (and app.json "version") only when a new APK has to be installed; code-only
-    # changes reach installed apps through `eas update` instead
-    latest = os.getenv("DHAN_LATEST_APP_VERSION", "1.0.0")
+    """The newest installable app, read from downloads/version.json next to the APK.
+
+    Publishing a new APK means replacing dhan.apk and raising latest_version in that file, so
+    every installed app offers the update. Raise min_version only when older installs must
+    update before they can keep working; the app then can't dismiss the prompt.
+    """
+    import json
+
+    info: dict = {}
+    try:
+        info = json.loads((STATIC_DIR / "downloads" / "version.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        logger.warning("downloads/version.json is missing or invalid; reporting 1.0.0")
+    latest = str(info.get("latest_version") or "1.0.0")
     return {
         "latest_version": latest,
-        "min_version": "1.0.0",
+        "min_version": str(info.get("min_version") or "1.0.0"),
         "download_url": "https://dhan-api-jqfp.onrender.com/downloads/dhan.apk",
-        "release_notes": "Latest updates, improved performance, and bug fixes.",
-        "force_update": False,
+        "release_notes": str(info.get("release_notes") or "Latest updates and fixes."),
+        "force_update": bool(info.get("force_update", False)),
     }
 
 
