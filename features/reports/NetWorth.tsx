@@ -27,7 +27,7 @@ import { netWorth, netWorthSeries } from '@/utils/netWorth';
 
 export function NetWorthScreen() {
   const { month } = useToday();
-  const money = useMoneyData();
+  const money = useMoneyData('all');
   const assets = useAssets();
   const liabilities = useLiabilities();
   const history = useHistory();

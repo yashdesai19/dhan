@@ -45,7 +45,7 @@ const PAGES = [
 
 function PageVisual({ index }: { index: number }) {
   const { today, month } = useToday();
-  const { transactions, categories, accounts } = useMoneyData();
+  const { transactions, categories, accounts } = useMoneyData('all');
   const budgets = useBudgets().data ?? [];
   const goals = useGoals().data ?? [];
 

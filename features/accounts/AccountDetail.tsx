@@ -33,7 +33,7 @@ export function AccountDetailScreen() {
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { today, month } = useToday();
-  const money = useMoneyData();
+  const money = useMoneyData('all');
   const archive = useArchiveAccount();
   const show = useToastStore((s) => s.show);
   const account = money.accounts.find((a) => a.id === id);

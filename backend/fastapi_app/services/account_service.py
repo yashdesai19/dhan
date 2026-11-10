@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_app.models.account import Account
 from fastapi_app.schemas.account import AccountCreate, AccountUpdate
+from fastapi_app.services import book_service
 
 
 async def create_account(
@@ -43,8 +44,12 @@ async def create_account(
                 detail="Credit card credit limit cannot be negative.",
             )
 
+    if data.book_id is not None:
+        await book_service.ensure_owned(db, user_id, data.book_id)
+
     account = Account(
         user_id=user_id,
+        book_id=data.book_id,
         name=data.name,
         type=data.type,
         balance=data.balance,
@@ -142,6 +147,11 @@ async def update_account(
                 detail=f"An active account named '{data.name}' already exists.",
             )
         account.name = data.name
+
+    if "book_id" in data.model_fields_set:
+        if data.book_id is not None:
+            await book_service.ensure_owned(db, user_id, data.book_id)
+        account.book_id = data.book_id
 
     if data.type is not None:
         account.type = data.type

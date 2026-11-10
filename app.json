@@ -71,7 +71,8 @@
           "faceIDPermission": "DHAN uses Face ID to unlock the app."
         }
       ],
-      "./plugins/withReducedApkSize.js"
+      "./plugins/withReducedApkSize.js",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": false

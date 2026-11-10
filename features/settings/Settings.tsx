@@ -115,9 +115,9 @@ export function SettingsScreen() {
         <ListRow
           leading={<IconTile icon="download" size="sm" />}
           title="Export data"
-          subtitle="CSV or PDF, any date range"
+          subtitle="PDF or Excel, any month and book"
           chevron
-          accessibilityHint="Not available in this preview"
+          onPress={() => router.push('/export')}
         />
         <ListRow
           leading={<IconTile icon="tag" size="sm" />}

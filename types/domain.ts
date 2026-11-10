@@ -33,6 +33,17 @@ export interface Account {
   dueDate?: ISODate;
   includeInTotal: boolean;
   archived: boolean;
+  /** Empty means the Personal book. */
+  bookId?: ID;
+}
+
+export type BookKind = 'personal' | 'business';
+
+/** A separate set of accounts, e.g. a shop kept apart from personal money. */
+export interface Book {
+  id: ID;
+  name: string;
+  kind: BookKind;
 }
 
 export type CategoryKind = 'expense' | 'income';

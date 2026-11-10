@@ -20,6 +20,7 @@ from fastapi_app.api.v1.endpoints import (
     accounts,
     ai,
     auth,
+    books,
     budgets,
     categories,
     goals,
@@ -156,6 +157,7 @@ async def get_app_version() -> dict:
 # Mount direct root endpoints (/auth, /accounts, /categories, /transactions, /budgets, /groups, /splits, /settlements, /people, /goals, /recurring, /reports, /net-worth, /ai)
 app.include_router(auth.router)
 app.include_router(accounts.router)
+app.include_router(books.router)
 app.include_router(categories.router)
 app.include_router(transactions.router)
 app.include_router(budgets.router)

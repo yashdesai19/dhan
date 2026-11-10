@@ -11,6 +11,7 @@ const impl: Pick<
   | 'readRepo'
   | 'transactionsRepo'
   | 'accountsRepo'
+  | 'booksRepo'
   | 'budgetRepo'
   | 'splitsRepo'
   | 'goalsRepo'
@@ -26,6 +27,7 @@ export const {
   readRepo,
   transactionsRepo,
   accountsRepo,
+  booksRepo,
   budgetRepo,
   splitsRepo,
   goalsRepo,

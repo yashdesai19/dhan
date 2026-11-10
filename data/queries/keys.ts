@@ -1,6 +1,7 @@
 export const qk = {
   user: ['user'],
   accounts: ['accounts'],
+  books: ['books'],
   categories: ['categories'],
   transactions: ['transactions'],
   budgets: ['budgets'],

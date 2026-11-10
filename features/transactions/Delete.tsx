@@ -14,7 +14,7 @@ import { categoryTotals } from '@/utils/summary';
 function Body() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { month } = useToday();
-  const money = useMoneyData();
+  const money = useMoneyData('all');
   const del = useDeleteTransaction();
   const show = useToastStore((s) => s.show);
   const returnTo = useReturnTo();

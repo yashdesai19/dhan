@@ -37,6 +37,14 @@ class Account(Base):
         ),
         nullable=False,
     )
+    # Empty means the user's Personal book
+    book_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("dhan_books.id", name="fk_dhan_accounts_book_id", ondelete="SET NULL"),
+        nullable=True,
+        default=None,
+        index=True,
+    )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[str] = mapped_column("account_type", String(30), default="savings", nullable=False)
     balance: Mapped[Decimal] = mapped_column(

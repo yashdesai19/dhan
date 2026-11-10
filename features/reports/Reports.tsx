@@ -21,9 +21,10 @@ import {
   Text,
   TopBar,
 } from '@/components';
-import { useAssets, useHistory, useLiabilities } from '@/data/queries';
-import { useMoneyData, useToday } from '@/features/shared/hooks';
+import { useAssets, useLiabilities } from '@/data/queries';
+import { useActiveBook, useMoneyData, useScopedHistory, useToday } from '@/features/shared/hooks';
 import { iconSize, radius, size, space, useColors } from '@/theme';
+import { profitAndLoss } from '@/utils/books';
 import { dayMonth, monthName, monthYear, shiftMonth } from '@/utils/dates';
 import { inr, signedPercent } from '@/utils/format';
 import { netWorth } from '@/utils/netWorth';
@@ -59,7 +60,8 @@ export function ReportsScreen() {
   const router = useRouter();
   const { month } = useToday();
   const money = useMoneyData();
-  const history = useHistory();
+  const history = useScopedHistory();
+  const { book, isBusiness } = useActiveBook();
   const assets = useAssets();
   const liabilities = useLiabilities();
   const [period, setPeriod] = useState<Period>('month');
@@ -86,6 +88,7 @@ export function ReportsScreen() {
       top: topExpenses(t, month),
       nw,
       nwChange: nw.net - lastNw,
+      pl: profitAndLoss(t, month, money.categories),
     };
   }, [history.data, money, month, assets.data, liabilities.data]);
 
@@ -98,7 +101,7 @@ export function ReportsScreen() {
       gap={space[18]}
       refresh={{ refreshing: history.isRefetching, onRefresh: () => void history.refetch() }}
     >
-      <TopBar title="Reports" />
+      <TopBar title={isBusiness ? (book?.name ?? 'Reports') : 'Reports'} />
       {offline ? (
         <Banner icon="wifioff" tone="neutral">
           You’re offline. Anything you add will sync when you’re back.
@@ -126,13 +129,21 @@ export function ReportsScreen() {
       ) : null}
       <View style={styles.grid}>
         <View style={styles.gridRow}>
-          <KpiTile label="Earned" value={inr(view.totals.income)} />
-          <KpiTile label="Spent" value={inr(view.totals.spent)} />
+          <KpiTile label={isBusiness ? 'Sales' : 'Earned'} value={inr(view.totals.income)} />
+          <KpiTile label={isBusiness ? 'Expenses' : 'Spent'} value={inr(view.totals.spent)} />
         </View>
         {!offline ? (
           <View style={styles.gridRow}>
-            <KpiTile label="Saved" value={inr(view.totals.net)} tone="income" />
-            <KpiTile label="Savings rate" value={`${view.totals.savingsRate}%`} tone="income" />
+            <KpiTile
+              label={isBusiness ? 'Profit' : 'Saved'}
+              value={inr(view.totals.net)}
+              tone={view.totals.net >= 0 ? 'income' : undefined}
+            />
+            <KpiTile
+              label={isBusiness ? 'Margin' : 'Savings rate'}
+              value={`${view.totals.savingsRate}%`}
+              tone={view.totals.net >= 0 ? 'income' : undefined}
+            />
           </View>
         ) : null}
       </View>
@@ -147,6 +158,40 @@ export function ReportsScreen() {
         <Skeleton width="100%" height={220} radius={radius.card} />
       ) : (
         <>
+          {isBusiness ? (
+            <>
+              <SectionHeader title={`Profit and loss · ${monthName(month, true)}`} />
+              <ListCard>
+                {view.pl.income.map((l) => (
+                  <ListRow
+                    key={l.id}
+                    title={l.label}
+                    pad={10}
+                    trailing={<RowAmount value={inr(l.amount)} color="income" />}
+                  />
+                ))}
+                {view.pl.expenses.map((l) => (
+                  <ListRow
+                    key={l.id}
+                    title={l.label}
+                    pad={10}
+                    trailing={<RowAmount value={inr(l.amount)} />}
+                  />
+                ))}
+                <ListRow
+                  title={view.pl.profit >= 0 ? 'Net profit' : 'Net loss'}
+                  subtitle={`${inr(view.pl.totalIncome)} in · ${inr(view.pl.totalExpenses)} out`}
+                  pad={14}
+                  trailing={
+                    <RowAmount
+                      value={inr(view.pl.profit)}
+                      color={view.pl.profit >= 0 ? 'income' : 'expense'}
+                    />
+                  }
+                />
+              </ListCard>
+            </>
+          ) : null}
           <Card>
             <View style={styles.between}>
               <Text variant="section">Income vs spending</Text>
@@ -193,17 +238,25 @@ export function ReportsScreen() {
           <Text variant="meta" color="muted">
             Your share of group expenses, like rent and trips, counts as spending once you settle up.
           </Text>
-          <ListCard>
-            <ListRow
-              leading={<IconTile icon="trend" tone="primary" size="lg" />}
-              title={`Net worth ${inr(view.nw.net)}`}
-              subtitle={`${inr(view.nwChange, 'plus')} since ${prev}`}
-              subtitleColor={view.nwChange >= 0 ? 'income' : 'expense'}
-              chevron
-              pad={14}
-              onPress={() => router.push('/reports/net-worth')}
-            />
-          </ListCard>
+          {history.hasNetWorth ? (
+            <ListCard>
+              <ListRow
+                leading={<IconTile icon="trend" tone="primary" size="lg" />}
+                title={`Net worth ${inr(view.nw.net)}`}
+                subtitle={`${inr(view.nwChange, 'plus')} since ${prev}`}
+                subtitleColor={view.nwChange >= 0 ? 'income' : 'expense'}
+                chevron
+                pad={14}
+                onPress={() => router.push('/reports/net-worth')}
+              />
+            </ListCard>
+          ) : null}
+          <Button
+            label="Export PDF or Excel"
+            kind="secondary"
+            icon="download"
+            onPress={() => router.push('/export')}
+          />
           <SectionHeader
             title="Account balances"
             action="Accounts"
