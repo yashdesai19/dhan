@@ -1,7 +1,7 @@
 // Log in (+ error state), Sign up, Forgot password, Reset link sent, Create first account.
 // Mock/local only: no auth service is called (spec §0).
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import {
@@ -95,7 +95,7 @@ export function LoginScreen() {
 
   const pwError = attemptsLeft !== null ? 'That password doesn’t match. Try again or reset it.' : null;
   return (
-    <Screen top="stack" gutter={layout.gutterAuth} gap={space[16]} keyboard>
+    <Screen top="stack" gutter={layout.gutterAuth} gap={space[16]} keyboard contentStyle={authCentered}>
       <View style={styles.heroTop}>
         <Logo size={48} radius={14} />
         <Text variant="displayXl" accessibilityRole="header">
@@ -185,10 +185,19 @@ export function SignUpScreen() {
   const [name, setName] = useState(demo('Yash Desai', ''));
   const [email, setEmail] = useState(demo('yash@example.com', ''));
   const [password, setPassword] = useState(demo('dhan-2026-secure', ''));
-  const [agree, setAgree] = useState(true);
+  const [show, setShow] = useState(false);
+  // Consent is the user's to give: the box starts unticked
+  const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const score = strength(password);
-  const label = score >= 3 ? 'Strong password' : score === 2 ? 'Fair password' : 'Weak password';
+  // Nothing typed yet is not a weak password: say what's needed instead of warning
+  const label = !password
+    ? 'Use at least 8 characters'
+    : score >= 3
+      ? 'Strong password'
+      : score === 2
+        ? 'Fair password'
+        : 'Weak password';
 
   const submit = () => {
     setError(null);
@@ -203,7 +212,7 @@ export function SignUpScreen() {
   };
 
   return (
-    <Screen top="stack" gutter={layout.gutterAuth} gap={space[20]} keyboard>
+    <Screen top="stack" gutter={layout.gutterAuth} gap={space[20]} keyboard contentStyle={authCentered}>
       <TopBar onBack={() => (router.canGoBack() ? router.back() : router.replace('/onboarding'))} />
       <View style={styles.gap10}>
         <Text variant="display" accessibilityRole="header">
@@ -234,9 +243,10 @@ export function SignUpScreen() {
           label="Password"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          secureTextEntry={!show}
           autoComplete="new-password"
           textContentType="newPassword"
+          trailing={<PasswordEye visible={show} onToggle={() => setShow(!show)} />}
         />
         <View style={styles.meter} accessible accessibilityLabel={label}>
           {[0, 1, 2, 3].map((i) => (
@@ -249,7 +259,11 @@ export function SignUpScreen() {
             />
           ))}
         </View>
-        <Text variant="meta" weight="medium" color={score >= 3 ? 'primary' : 'warnText'}>
+        <Text
+          variant="meta"
+          weight="medium"
+          color={!password ? 'muted' : score >= 3 ? 'primary' : 'warnText'}
+        >
           {label}
         </Text>
       </View>
@@ -295,7 +309,7 @@ export function ForgotPasswordScreen() {
   const [email, setEmail] = useState('yash@example.com');
   const [error, setError] = useState<string | null>(null);
   return (
-    <Screen top="stack" gutter={layout.gutterAuth} gap={space[24]} keyboard>
+    <Screen top="stack" gutter={layout.gutterAuth} gap={space[24]} keyboard contentStyle={authCentered}>
       <TopBar />
       <View style={styles.gap10}>
         <Text variant="display" accessibilityRole="header">
@@ -451,6 +465,9 @@ export function CreateFirstAccountScreen() {
     </Screen>
   );
 }
+
+// A browser window is far taller than the form: centre it rather than pin it to the top
+const authCentered = Platform.OS === 'web' ? { justifyContent: 'center' as const } : undefined;
 
 const styles = StyleSheet.create({
   heroTop: { gap: space[10], paddingTop: space[8] },
